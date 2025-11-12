@@ -8,6 +8,39 @@
 </head>
 <body class="bg-gray-100 min-h-screen text-gray-800 font-inter">
   {{content}}
+  <!-- Modal de Simulação de Chamada (HTMLDialogElement) -->
+  <dialog id="call-modal" class="rounded-lg p-0 w-full max-w-md shadow-xl border border-gray-200">
+    <div class="p-8 flex flex-col gap-6">
+      <h2 class="text-xl font-semibold text-gray-800">Simular Chamada</h2>
+      <p class="text-sm text-gray-600 leading-relaxed">Informe o número de telefone para simular a ligação.</p>
+
+      <div class="space-y-2">
+        <label for="call-phone-input" class="block text-sm font-medium text-gray-700">Telefone</label>
+        <input id="call-phone-input" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="(11) 98765-4321" />
+      </div>
+
+      <div class="flex justify-between">
+        <button id="call-modal-cancel" class="px-4 py-2 text-sm rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-gray-700">Cancelar</button>
+        <button id="call-modal-confirm" class="px-4 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700">Continuar</button>
+      </div>
+    </div>
+  </dialog>  <!-- Modal de Simulação de Chamada (HTMLDialogElement) -->
+  <dialog id="call-modal" class="rounded-lg p-0 w-full max-w-md shadow-xl border border-gray-200">
+    <div class="p-8 flex flex-col gap-6">
+      <h2 class="text-xl font-semibold text-gray-800">Simular Chamada</h2>
+      <p class="text-sm text-gray-600 leading-relaxed">Informe o número de telefone para simular a ligação.</p>
+
+      <div class="space-y-2">
+        <label for="call-phone-input" class="block text-sm font-medium text-gray-700">Telefone</label>
+        <input id="call-phone-input" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="(11) 98765-4321" />
+      </div>
+
+      <div class="flex justify-between">
+        <button id="call-modal-cancel" class="px-4 py-2 text-sm rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-gray-700">Cancelar</button>
+        <button id="call-modal-confirm" class="px-4 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700">Continuar</button>
+      </div>
+    </div>
+  </dialog>
   <script type="module" src="/static/scripts/main.js"></script>
 </body>
 </html>

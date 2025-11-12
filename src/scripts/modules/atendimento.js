@@ -10,12 +10,18 @@ export function initAtendimento() {
 
   if (knownBtn) {
     knownBtn.addEventListener('click', () => {
-      window.location.href = '/atendimento/identificado';
+      openCallModal({
+        defaultPhone: '(11) 98765-4321',
+        route: '/atendimento/identificado'
+      });
     });
   }
   if (newBtn) {
     newBtn.addEventListener('click', () => {
-      window.location.href = '/atendimento/novo';
+      openCallModal({
+        defaultPhone: '(21) 99999-0000',
+        route: '/atendimento/novo'
+      });
     });
   }
 
@@ -83,6 +89,15 @@ export function initAtendimento() {
       alert('Cliente salvo e pedido registrado! (simulação)');
     });
   }
+
+  // Ao carregar páginas de atendimento identificado ou novo, aplicar telefone salvo
+  const storedPhone = localStorage.getItem('currentCallPhone');
+  if (storedPhone) {
+    const knownPhoneEl = document.getElementById('known-phone');
+    if (knownPhoneEl) knownPhoneEl.textContent = storedPhone;
+    const newPhoneEl = document.getElementById('new-phone');
+    if (newPhoneEl) newPhoneEl.textContent = storedPhone;
+  }
 }
 
 /**
@@ -148,4 +163,43 @@ function getSelectedProducts(context) {
   });
 
   return selected;
+}
+
+/**
+ * Abre modal de simulação de chamada
+ * @param {{defaultPhone:string, route:string}} param0
+ */
+function openCallModal({ defaultPhone, route }) {
+  /** @type {HTMLDialogElement|null} */
+  const dialog = document.getElementById('call-modal');
+  if (!dialog || typeof dialog.showModal !== 'function') return;
+  const phoneInput = document.getElementById('call-phone-input');
+  const btnCancel = document.getElementById('call-modal-cancel');
+  const btnConfirm = document.getElementById('call-modal-confirm');
+
+  phoneInput.value = defaultPhone || '';
+  dialog.showModal();
+  // foco após abrir
+  setTimeout(() => phoneInput.focus(), 0);
+
+  const close = () => dialog.close();
+
+  // Limpar handlers anteriores para evitar múltiplos binds
+  btnCancel.onclick = () => close();
+  btnConfirm.onclick = () => {
+    const entered = phoneInput.value.trim();
+    if (!entered) {
+      alert('Informe um número de telefone.');
+      return;
+    }
+    localStorage.setItem('currentCallPhone', entered);
+    close();
+    window.location.href = route;
+  };
+
+  // Fechar clicando no backdrop (clique no próprio dialog fora do conteúdo)
+  const clickHandler = (e) => {
+    if (e.target === dialog) close();
+  };
+  dialog.addEventListener('click', clickHandler, { once: true });
 }
