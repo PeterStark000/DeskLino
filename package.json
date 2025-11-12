@@ -1,0 +1,14 @@
+{
+  "name": "desklino",
+  "version": "1.0.0",
+  "description": "Projeto para aprovacação na disciplina de Banco de Dados I. Sistema de atendimento e registro de pedidos e clientes.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
