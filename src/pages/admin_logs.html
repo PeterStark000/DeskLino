@@ -1,0 +1,29 @@
+<main id="admin-panel" class="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+  <div class="bg-white rounded-xl shadow-xl border border-gray-200">
+    <div class="border-b border-gray-200">
+      <h2 class="text-2xl font-bold text-gray-900 p-6">Painel Administrativo</h2>
+      <nav class="flex space-x-4 px-6" id="admin-nav">
+        <a href="/admin/usuarios" class="admin-tab-button py-3 px-1 text-gray-600 border-b-2 border-transparent hover:border-gray-300 transition-all">Gerenciar Usuários</a>
+        <a href="/admin/logs" class="admin-tab-button py-3 px-1 text-gray-600 border-b-2 border-transparent hover:border-gray-300 transition-all active">Histórico de Alterações</a>
+      </nav>
+    </div>
+
+    <div class="p-6">
+      <h3 class="text-xl font-semibold mb-4 text-gray-800">Histórico de Alterações do Sistema</h3>
+      <p class="mb-6 text-gray-600">Logs de atividades importantes realizadas no sistema.</p>
+      <div class="overflow-x-auto rounded-lg border">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data/Hora</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuário</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ação</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Detalhes</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200" id="logs-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</main>

@@ -1,0 +1,31 @@
+<div id="login-screen" class="flex items-center justify-center min-h-screen">
+  <div class="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-xl">
+    <div class="flex justify-center">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343m11.314 11.314a8 8 0 00-11.314-11.314m11.314 11.314L22 22M12 20.364V19.273c0-1.357.6-2.6 1.5-3.436A5 5 0 106.5 12c0 .35.038.69.108 1.02" />
+      </svg>
+    </div>
+    <h2 class="text-3xl font-bold text-center text-gray-900">
+      Picolino Gás
+    </h2>
+    <p class="text-center text-gray-600">Sistema de Suporte ao Atendimento</p>
+
+    <form id="login-form" class="space-y-6">
+      <div>
+        <label for="username" class="block text-sm font-medium text-gray-700">Usuário</label>
+        <input id="username" name="username" type="text" required value="admin.user"
+          class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+      </div>
+      <div>
+        <label for="password" class="block text-sm font-medium text-gray-700">Senha</label>
+        <input id="password" name="password" type="password" required value="admin"
+          class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+        <p class="mt-2 text-xs text-gray-500">Dica: Use a senha 'admin' para acesso de administrador.</p>
+      </div>
+      <button type="submit"
+        class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-150">
+        Entrar
+      </button>
+    </form>
+  </div>
+</div>

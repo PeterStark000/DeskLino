@@ -1,0 +1,26 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@import "flowbite/src/themes/default";
+
+/* Custom styles */
+.admin-tab-button.active {
+  border-bottom-color: #3B82F6; /* blue-600 */
+  color: #3B82F6;
+  font-weight: 600;
+}
+
+body { font-family: 'Inter', sans-serif; }
+
+/* Suaviza scroll em listas de produtos */
+#products-list-known::-webkit-scrollbar,
+#products-list-new::-webkit-scrollbar {
+  width: 8px;
+}
+#products-list-known::-webkit-scrollbar-thumb,
+#products-list-new::-webkit-scrollbar-thumb {
+  background-color: rgba(100,116,139,0.4); /* slate-500 */
+  border-radius: 9999px;
+}
