@@ -24,13 +24,23 @@ export function initAdmin() {
 
   if (logsTbody) {
     fetch('/api/logs').then(r => r.json()).then(data => {
-      logsTbody.innerHTML = data.logs.map(l => `
+      logsTbody.innerHTML = data.logs.map(l => {
+        const date = new Date(l.datetime);
+        const formattedDate = date.toLocaleString('pt-BR', { 
+          day: '2-digit', 
+          month: '2-digit', 
+          year: 'numeric',
+          hour: '2-digit', 
+          minute: '2-digit'
+        });
+        return `
         <tr>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${l.datetime}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${formattedDate}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${l.user}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm ${l.type === 'SEGURANÇA' ? 'text-red-600' : 'text-green-600'}">${l.type}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${l.detail}</td>
-        </tr>`).join('');
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${l.phone || '-'}</td>
+        </tr>`;
+      }).join('');
     });
   }
 

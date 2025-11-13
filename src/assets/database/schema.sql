@@ -1,4 +1,10 @@
-CREATE DATABASE IF NOT EXISTS desklino;
+SET NAMES 'utf8mb4';
+SET CHARACTER SET utf8mb4;
+SET collation_connection = 'utf8mb4_unicode_ci';
+
+CREATE DATABASE IF NOT EXISTS desklino
+    CHARACTER SET utf8mb4
+    COLLATE utf8mb4_unicode_ci;
 
 USE desklino;
 
@@ -53,10 +59,11 @@ CREATE TABLE IF NOT EXISTS Endereco_Entrega (
 );
 
 CREATE TABLE IF NOT EXISTS Atendente (
-    cod_atendente SMALLINT PRIMARY KEY NOT NULL,
+    cod_atendente SMALLINT PRIMARY KEY NOT NULL AUTO_INCREMENT,
     nome VARCHAR(150) NOT NULL,
     login VARCHAR(50) NOT NULL UNIQUE,
-    senha VARCHAR(50) NOT NULL
+    senha VARCHAR(255) NOT NULL,
+    tipo_usuario VARCHAR(10) NOT NULL DEFAULT 'atendente'
 );
 
 CREATE TABLE IF NOT EXISTS Atendimento (
@@ -188,10 +195,23 @@ VALUES
 (19, 'Residência', 'Rua das Hortênsias', '75', NULL, 'Vila Bela', 'Casa com portão cinza', 15, 'S'),
 (20, 'Casa de Praia', 'Av. Atlântica', '321', NULL, 'Beira Mar', 'Em frente à barraca Sol Nascente', 15, 'N');
 
-INSERT INTO Atendente (cod_atendente, nome, login, senha)
+INSERT INTO Atendente (cod_atendente, nome, login, senha, tipo_usuario)
 VALUES
-(1, 'Admin Principal', 'admin.user', 'hash_admin'),
-(2, 'Lucas Nunes', 'atendente.01', 'hash_lucas'),
-(3, 'Jean Vitor', 'atendente.02', 'hash_jean'),
-(4, 'Daniel Marques', 'atendente.03', 'hash_daniel'),
-(5, 'João Gabriel', 'atendente.04', 'hash_joao');
+(1, 'Admin Principal', 'admin.user', 'hash_admin', 'admin'),
+(2, 'Lucas Nunes', 'atendente.01', 'hash_lucas', 'atendente'),
+(3, 'Jean Vitor', 'atendente.02', 'hash_jean', 'atendente'),
+(4, 'Daniel Marques', 'atendente.03', 'hash_daniel', 'atendente'),
+(5, 'João Gabriel', 'atendente.04', 'hash_joao', 'atendente');
+
+INSERT INTO Produto (cod_produto, nome, descricao, valor)
+VALUES
+(1, 'Botijão P13', 'Botijão de gás GLP 13kg', 105.00),
+(2, 'Botijão P20', 'Botijão de gás GLP 20kg', 150.00),
+(3, 'Botijão P45', 'Botijão de gás GLP 45kg industrial', 320.00),
+(4, 'Água Mineral 20L', 'Galão de água mineral 20 litros', 18.00),
+(5, 'Água com Gás 20L', 'Galão de água com gás 20 litros', 22.00),
+(6, 'Suporte para Botijão', 'Suporte metálico para botijão de gás', 45.00),
+(7, 'Mangueira de Gás 1m', 'Mangueira para instalação de gás 1 metro', 15.00),
+(8, 'Mangueira de Gás 2m', 'Mangueira para instalação de gás 2 metros', 25.00),
+(9, 'Regulador de Gás', 'Regulador de pressão para botijão', 35.00),
+(10, 'Abraçadeira Metálica', 'Abraçadeira para fixação de mangueira', 5.00);

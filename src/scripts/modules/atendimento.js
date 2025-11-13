@@ -94,9 +94,53 @@ export function initAtendimento() {
   const storedPhone = localStorage.getItem('currentCallPhone');
   if (storedPhone) {
     const knownPhoneEl = document.getElementById('known-phone');
-    if (knownPhoneEl) knownPhoneEl.textContent = storedPhone;
+    if (knownPhoneEl) {
+      knownPhoneEl.textContent = storedPhone;
+      // Carrega dados do cliente
+      loadClientData(storedPhone);
+    }
     const newPhoneEl = document.getElementById('new-phone');
     if (newPhoneEl) newPhoneEl.textContent = storedPhone;
+  }
+}
+
+/**
+ * Carrega dados do cliente identificado
+ */
+async function loadClientData(phone) {
+  try {
+    const response = await fetch(`/api/clientes/${encodeURIComponent(phone)}`);
+    if (!response.ok) {
+      console.error('Cliente não encontrado');
+      return;
+    }
+    
+    const data = await response.json();
+    const customer = data.customer;
+    
+    // Atualiza dados na página
+    const nameEl = document.getElementById('cust-name');
+    const addressEl = document.getElementById('cust-address');
+    const refEl = document.getElementById('cust-ref');
+    const notesEl = document.getElementById('cust-notes');
+    
+    if (nameEl) nameEl.textContent = customer.name || '-';
+    if (addressEl) {
+      const fullAddress = [
+        customer.address,
+        customer.number,
+        customer.bairro
+      ].filter(Boolean).join(', ');
+      addressEl.textContent = fullAddress || '-';
+    }
+    if (refEl) refEl.textContent = customer.ref || '-';
+    if (notesEl) notesEl.value = customer.notes || '';
+    
+    // TODO: Carregar histórico de pedidos
+    // const history = customer.history || [];
+    
+  } catch (error) {
+    console.error('Erro ao carregar dados do cliente:', error);
   }
 }
 
@@ -170,6 +214,17 @@ function getSelectedProducts(context) {
 }
 
 /**
+ * Formata número de telefone com máscara (XX) XXXX-XXXX ou (XX) XXXXX-XXXX
+ */
+function formatPhone(value) {
+  const numbers = value.replace(/\D/g, '');
+  if (numbers.length <= 2) return numbers;
+  if (numbers.length <= 6) return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
+  if (numbers.length <= 10) return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 6)}-${numbers.slice(6)}`;
+  return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
+}
+
+/**
  * Abre modal de simulação de chamada
  * @param {{defaultPhone:string, route:string}} param0
  */
@@ -185,18 +240,55 @@ function openCallModal({ defaultPhone, route }) {
   dialog.showModal();
   setTimeout(() => phoneInput.focus(), 0);
 
+  // Formatação automática durante digitação
+  phoneInput.addEventListener('input', (e) => {
+    const cursorPos = e.target.selectionStart;
+    const oldLength = e.target.value.length;
+    e.target.value = formatPhone(e.target.value);
+    const newLength = e.target.value.length;
+    // Ajusta cursor se o tamanho mudou (por causa da formatação)
+    if (newLength > oldLength) {
+      e.target.setSelectionRange(cursorPos + 1, cursorPos + 1);
+    } else {
+      e.target.setSelectionRange(cursorPos, cursorPos);
+    }
+  });
+
   const close = () => dialog.close();
 
   btnCancel.onclick = () => close();
-  btnConfirm.onclick = () => {
+  btnConfirm.onclick = async () => {
     const entered = phoneInput.value.trim();
     if (!entered) {
       alert('Informe um número de telefone.');
       return;
     }
-    localStorage.setItem('currentCallPhone', entered);
-    close();
-    window.location.href = route;
+
+    // Validação contra database
+    const isKnownCustomer = route.includes('identificado');
+    const isNewCustomer = route.includes('novo');
+
+    try {
+      const response = await fetch(`/api/clientes/${encodeURIComponent(entered)}`);
+      const clientExists = response.ok;
+
+      if (isKnownCustomer && !clientExists) {
+        alert('Cliente não encontrado no sistema. Use a opção "Simular Chamada (Novo Cliente)" para cadastrar.');
+        return;
+      }
+
+      if (isNewCustomer && clientExists) {
+        alert('Este telefone já está cadastrado. Use a opção "Simular Chamada (Cliente Identificado)".');
+        return;
+      }
+
+      localStorage.setItem('currentCallPhone', entered);
+      close();
+      window.location.href = route;
+    } catch (error) {
+      console.error('Erro ao validar telefone:', error);
+      alert('Erro ao validar telefone. Tente novamente.');
+    }
   };
 
   // Fechar clicando no backdrop (clique no próprio dialog fora do conteúdo)

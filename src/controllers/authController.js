@@ -9,20 +9,23 @@ class AuthController {
         return res.status(400).json({ error: 'Usuário e senha são obrigatórios' });
       }
 
-      // TODO: Implementar bcrypt quando database estiver ativo
-      // const user = await DAO.getUserByUsername(username);
-      // if (!user) return res.status(401).json({ error: 'Usuário não encontrado' });
-      // const passwordMatch = await bcrypt.compare(password, user.password_hash);
-      // if (!passwordMatch) return res.status(401).json({ error: 'Senha incorreta' });
+      const user = await DAO.getUserByUsername(username);
+      
+      if (!user) {
+        return res.status(401).json({ error: 'Usuário não encontrado' });
+      }
 
-      const user = await DAO.getUserByUsername(username) || { username, name: username, role: 'atendente' };
-      const role = password === 'admin' ? 'admin' : user.role;
+      // Validação de senha (atualmente comparação direta, depois implementar bcrypt)
+      if (user.password_hash !== password) {
+        return res.status(401).json({ error: 'Senha incorreta' });
+      }
 
       res.json({ 
         user: { 
+          id: user.id,
           username: user.username, 
-          name: user.name || username, 
-          role 
+          name: user.name, 
+          role: user.role
         } 
       });
     } catch (error) {

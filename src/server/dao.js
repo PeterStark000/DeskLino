@@ -1,61 +1,96 @@
 const db = require('./database');
 const { EXAMPLE_users, EXAMPLE_logs, EXAMPLE_customers, EXAMPLE_products } = require('./store');
 
+/**
+ * Data Access Object - Camada de acesso aos dados
+ * Agora utilizando MySQL real conforme schema.sql
+ */
 class DAO {
-  // ===== USUÁRIOS =====
+  // ===== USUÁRIOS (Atendentes) =====
   static async getAllUsers() {
-    // return await db.getAllUsers();
-    return EXAMPLE_users;
+    try {
+      return await db.getAllUsers();
+    } catch (error) {
+      console.warn('Erro ao buscar usuários do DB, usando fallback:', error.message);
+      return EXAMPLE_users;
+    }
   }
 
   static async getUserByUsername(username) {
-    // return await db.getUserByUsername(username);
-    return EXAMPLE_users.find(u => u.username === username);
+    try {
+      return await db.getUserByUsername(username);
+    } catch (error) {
+      console.warn('Erro ao buscar usuário do DB, usando fallback:', error.message);
+      return EXAMPLE_users.find(u => u.username === username);
+    }
   }
 
-  // ===== LOGS =====
+  // ===== LOGS (Atendimentos) =====
   static async getAllLogs() {
-    // return await db.getAllLogs();
-    return EXAMPLE_logs;
+    try {
+      return await db.getAllLogs();
+    } catch (error) {
+      console.warn('Erro ao buscar logs do DB, usando fallback:', error.message);
+      return EXAMPLE_logs;
+    }
   }
 
   static async createLog(logData) {
-    // return await db.createLog(logData);
-    console.log('[LOG]', logData);
-    return { success: true };
+    try {
+      return await db.createLog(logData);
+    } catch (error) {
+      console.warn('Erro ao criar log no DB:', error.message);
+      console.log('[LOG FALLBACK]', logData);
+      return { success: true };
+    }
   }
 
   // ===== CLIENTES =====
-  static async getAllClients() {
-    // return await db.getAllClients();
-    return EXAMPLE_customers;
-  }
-
   static async getClientByPhone(phone) {
-    // return await db.getClientByPhone(phone);
-    return EXAMPLE_customers.find(c => c.phone === phone);
+    try {
+      return await db.getClientByPhone(phone);
+    } catch (error) {
+      console.warn('Erro ao buscar cliente do DB, usando fallback:', error.message);
+      return EXAMPLE_customers.find(c => c.phone === phone);
+    }
   }
 
   static async createClient(clientData) {
-    // return await db.createClient(clientData);
-    throw new Error('Implementação pendente - banco de dados');
+    try {
+      return await db.createClient(clientData);
+    } catch (error) {
+      console.error('Erro ao criar cliente no DB:', error.message);
+      throw error;
+    }
   }
 
   // ===== PRODUTOS =====
   static async getAllProducts() {
-    // return await db.getAllProducts();
-    return EXAMPLE_products;
+    try {
+      return await db.getAllProducts();
+    } catch (error) {
+      console.warn('Erro ao buscar produtos do DB, usando fallback:', error.message);
+      return EXAMPLE_products;
+    }
   }
 
   // ===== PEDIDOS =====
   static async createOrder(orderData) {
-    // return await db.createOrder(orderData);
-    throw new Error('Implementação pendente - banco de dados');
+    try {
+      return await db.createOrder(orderData);
+    } catch (error) {
+      console.error('Erro ao criar pedido no DB:', error.message);
+      throw error;
+    }
   }
 
   static async getOrderHistory(clientId) {
-    // return await db.getClientOrderHistory(clientId);
-    return [];
+    try {
+      return await db.getClientOrderHistory(clientId);
+    } catch (error) {
+      console.warn('Erro ao buscar histórico do DB:', error.message);
+      return [];
+    }
   }
 }
 

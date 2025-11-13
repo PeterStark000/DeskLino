@@ -20,8 +20,8 @@ const EXAMPLE_users = [
 ];
 
 const EXAMPLE_logs = [
-  { datetime: '05/11/2025 09:30:15', user: 'admin.user', type: 'SEGURANÇA', detail: "Nível de 'atendente.01' alterado para 'Atendente'" },
-  { datetime: '05/11/2025 09:28:02', user: 'atendente.02', type: 'PEDIDO', detail: 'Pedido #1024 criado para Cliente (21) 99999-0000' },
+  { datetime: '2025-11-05 09:30:15', user: 'João Silva', type: 'ATENDIMENTO', detail: 'Sr. Carlos Almeida', phone: '(11) 98765-4321' },
+  { datetime: '2025-11-05 09:28:02', user: 'Maria Souza', type: 'ATENDIMENTO', detail: 'Dona Helena Marques', phone: '(21) 98888-2222' },
 ];
 
 const EXAMPLE_customers = [
