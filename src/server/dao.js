@@ -1,12 +1,3 @@
-/**
- * DAO - Data Access Object
- * Camada de acesso direto aos dados (store.js ou database.js)
- * 
- * Para migrar para MySQL:
- * - Descomentar linhas com db.* 
- * - Comentar/remover linhas com EXAMPLE_*
- */
-
 const db = require('./database');
 const { EXAMPLE_users, EXAMPLE_logs, EXAMPLE_customers, EXAMPLE_products } = require('./store');
 
