@@ -504,6 +504,9 @@ async function loadClientData(phone) {
  * Carrega endereços do cliente
  */
 
+let currentClientId = null;
+let clientAddresses = [];
+
 async function loadClientAddresses(clientId) {
   currentClientId = clientId;
   try {

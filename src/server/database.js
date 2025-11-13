@@ -490,15 +490,13 @@ async function getClientOrderHistory(clientId) {
       p.status,
       p.forma_pag as payment_method,
       p.observacao as notes,
-      (
-        SELECT GROUP_CONCAT(CONCAT(pr.nome, ' (', ip.quantidade, 'x)') SEPARATOR ', ')
-        FROM Item_Pedido ip
-        INNER JOIN Produto pr ON ip.cod_produto = pr.cod_produto
-        WHERE ip.cod_pedido = p.cod_pedido
-      ) as products
+    GROUP_CONCAT(CONCAT(pr.nome, ' (', ip.quantidade, 'x)') SEPARATOR ', ') as products
     FROM Pedido p
     INNER JOIN Atendimento at ON p.cod_atendimento = at.cod_atendimento
+    LEFT JOIN Item_Pedido ip ON p.cod_pedido = ip.cod_pedido
+    LEFT JOIN Produto pr ON ip.cod_produto = pr.cod_produto
     WHERE at.cod_cliente = ?
+    GROUP BY p.cod_pedido
     ORDER BY p.data_pedido DESC
     LIMIT 10
   `;
