@@ -318,8 +318,8 @@ async function saveNewClientAndOrder(selectedProducts, createOrder) {
     
     // Caso contrário, cria novo cliente
     const name = document.getElementById('new-name')?.value?.trim();
-      const tipoCliente = document.getElementById('new-tipo-cliente')?.value;
-      const documento = document.getElementById('new-doc')?.value?.trim();
+    const tipoCliente = document.getElementById('new-tipo-cliente')?.value;
+    const documento = document.getElementById('new-doc')?.value?.trim();
     const addressRaw = document.getElementById('new-address')?.value?.trim();
     const bairro = document.getElementById('new-bairro')?.value?.trim();
     const ref = document.getElementById('new-ref')?.value?.trim();
@@ -333,20 +333,19 @@ async function saveNewClientAndOrder(selectedProducts, createOrder) {
 
     if (!documento) {
       alert('CPF ou CNPJ é obrigatório.');
-
-          // Valida CPF/CNPJ
-          const digitsOnly = documento.replace(/\D/g, '');
-          if (tipoCliente === 'PF' && digitsOnly.length !== 11) {
-            alert('CPF deve ter 11 dígitos.');
-            return;
-          }
-          if (tipoCliente === 'PJ' && digitsOnly.length !== 14) {
-            alert('CNPJ deve ter 14 dígitos.');
-            return;
-          }
       return;
     }
-
+    
+    const digitsOnly = documento.replace(/\D/g, '');
+    if (tipoCliente === 'PF' && digitsOnly.length !== 11) {
+      alert('CPF deve ter 11 dígitos.');
+      return;
+    }
+    if (tipoCliente === 'PJ' && digitsOnly.length !== 14) {
+      alert('CNPJ deve ter 14 dígitos.');
+      return;
+    }
+    
     // Parse simples: "Rua, Numero"
     let address = addressRaw;
     let number = 'S/N';
@@ -470,6 +469,9 @@ async function loadClientData(phone) {
     const data = await response.json();
     const customer = data.customer;
     
+    console.log('Cliente carregado:', customer);
+    console.log('ID do cliente:', customer.id);
+    
     // Atualiza dados na página
     const nameEl = document.getElementById('cust-name');
     const emailEl = document.getElementById('cust-email');
@@ -501,8 +503,6 @@ async function loadClientData(phone) {
 /**
  * Carrega endereços do cliente
  */
-let currentClientId = null;
-let clientAddresses = [];
 
 async function loadClientAddresses(clientId) {
   currentClientId = clientId;
@@ -677,15 +677,33 @@ async function loadClientAddresses(clientId) {
 // =============================
 async function loadClientOrderHistory(clientId) {
   const container = document.getElementById('order-history-list');
-  if (!container) return;
+  if (!container) {
+    console.warn('Container order-history-list não encontrado');
+    return;
+  }
+  
+  console.log('Carregando histórico para clientId:', clientId);
+  
   try {
     const resp = await fetch(`/api/clientes/${clientId}/pedidos`);
-    if (!resp.ok) throw new Error('Falha ao buscar histórico');
-    const { history } = await resp.json();
+    console.log('Response status:', resp.status);
+    
+    if (!resp.ok) {
+      const errorText = await resp.text();
+      console.error('Erro na resposta:', errorText);
+      throw new Error('Falha ao buscar histórico');
+    }
+    
+    const data = await resp.json();
+    console.log('Dados recebidos:', data);
+    
+    const { history } = data;
+    
     if (!history || history.length === 0) {
       container.innerHTML = '<div class="p-3 bg-gray-50 rounded-lg border text-sm text-gray-500">Nenhum pedido encontrado</div>';
       return;
     }
+    
     container.innerHTML = history.map(h => {
       const dateStr = h.created_at ? new Date(h.created_at).toLocaleDateString('pt-BR') : '-';
       const status = h.status || 'Desconhecido';
@@ -698,7 +716,8 @@ async function loadClientOrderHistory(clientId) {
       `;
     }).join('');
   } catch (e) {
-    container.innerHTML = `<div class=\"p-3 bg-red-50 rounded-lg border text-sm text-red-600\">Erro ao carregar histórico: ${e.message}</div>`;
+    console.error('Erro ao carregar histórico:', e);
+    container.innerHTML = `<div class="p-3 bg-red-50 rounded-lg border text-sm text-red-600">Erro ao carregar histórico: ${e.message}</div>`;
   }
 }
 

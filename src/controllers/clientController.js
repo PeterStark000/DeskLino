@@ -194,8 +194,13 @@ class ClientController {
   static async getOrderHistory(req, res) {
     try {
       const clientId = parseInt(req.params.id, 10);
+      console.log('[ClientController.getOrderHistory] clientId:', clientId);
+      
       if (isNaN(clientId)) return res.status(400).json({ error: 'ID inválido' });
+      
       const history = await DAO.getOrderHistory(clientId);
+      console.log('[ClientController.getOrderHistory] history:', history.length, 'pedidos');
+      
       res.json({ history });
     } catch (e) {
       console.error('[ClientController.getOrderHistory]', e);
