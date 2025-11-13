@@ -8,15 +8,13 @@
 @plugin "flowbite/plugin";
 @source "../node_modules/flowbite";
 
-/* Custom styles */
-.callout {}
-
-/* Backdrop do <dialog> (modal nativo) */
 dialog::backdrop {
-  background-color: rgba(0, 0, 0, 0.5);
-  -webkit-backdrop-filter: blur(2px);
-  backdrop-filter: blur(2px);
+  background-color: rgba(0, 0, 0, 0.15);
+  -webkit-backdrop-filter: blur(2px); 
+  backdrop-filter: blur(2px);         
+  z-index: 9998; 
 }
+
 .admin-tab-button.active {
   border-bottom-color: #3B82F6; /* blue-600 */
   color: #3B82F6;

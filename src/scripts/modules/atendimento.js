@@ -118,10 +118,12 @@ async function loadProducts() {
     const knownContainer = document.getElementById('products-list-known');
     if (knownContainer) {
       knownContainer.innerHTML = products.map(product => `
-        <div class="flex items-center gap-4 px-3 py-2 rounded-lg border bg-white hover:bg-gray-50 transition">
-          <input type="checkbox" value="${product.name}" class="product-checkbox w-5 h-5 flex-shrink-0 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2" />
-          <span class="flex-1 text-sm font-medium text-gray-800 min-w-0">${product.name}</span>
-          <input type="number" min="1" value="1" class="w-16 px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" data-product="${product.name}" />
+        <div class="flex items-center justify-between px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 shadow-sm transition">
+          <div class="flex-1 items-center ">
+            <input type="checkbox" value="${product.name}" class="product-checkbox w-5 h-5 flex-shrink-0 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2" />
+            <span class="flex-1 text-sm font-medium text-gray-800 min-w-0">${product.name}</span>
+          </div>
+        <input type="number" min="1" value="1" class="w-16 px-2 py-1.5 text-sm text-right border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" data-product="${product.name}" />
         </div>
       `).join('');
     }
@@ -130,10 +132,12 @@ async function loadProducts() {
     const newContainer = document.getElementById('products-list-new');
     if (newContainer) {
       newContainer.innerHTML = products.map(product => `
-        <div class="flex items-center gap-4 px-3 py-2 rounded-lg border bg-white hover:bg-gray-50 transition">
-          <input type="checkbox" value="${product.name}" class="product-checkbox w-5 h-5 flex-shrink-0 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2" />
-          <span class="flex-1 text-sm font-medium text-gray-800 min-w-0">${product.name}</span>
-          <input type="number" min="1" value="1" class="w-16 px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" data-product="${product.name}" />
+        <div class="flex items-center justify-between px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 shadow-sm transition">
+          <div class="flex-1 items-center ">
+            <input type="checkbox" value="${product.name}" class="product-checkbox w-5 h-5 flex-shrink-0 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2" />
+            <span class="flex-1 text-sm font-medium text-gray-800 min-w-0">${product.name}</span>
+          </div>
+        <input type="number" min="1" value="1" class="w-16 px-2 py-1.5 text-sm text-right border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" data-product="${product.name}" />
         </div>
       `).join('');
     }
@@ -179,12 +183,10 @@ function openCallModal({ defaultPhone, route }) {
 
   phoneInput.value = defaultPhone || '';
   dialog.showModal();
-  // foco após abrir
   setTimeout(() => phoneInput.focus(), 0);
 
   const close = () => dialog.close();
 
-  // Limpar handlers anteriores para evitar múltiplos binds
   btnCancel.onclick = () => close();
   btnConfirm.onclick = () => {
     const entered = phoneInput.value.trim();

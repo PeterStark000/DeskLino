@@ -38,7 +38,7 @@ const EXAMPLE_products = [
   { id: 1, name: 'Botijão P13', price: 95.00, available: true },
   { id: 2, name: 'Água 20L', price: 12.00, available: true },
   { id: 3, name: 'Botijão P45', price: 320.00, available: true },
-  { id: 4, name: 'Garrafa de Gás P5', price: 45.00, available: false },
+  { id: 4, name: 'Garrafa Água 1L', price: 6.00, available: false },
 ];
 
 module.exports = {
