@@ -6,6 +6,7 @@ export function initAtendimento() {
   const newBtn = document.getElementById('sim-new-customer');
   const endCallButtons = document.querySelectorAll('.btn-end-call');
   const adminToggleButton = document.getElementById('admin-toggle-button');
+  const adminClientesBtn = document.getElementById('btn-admin-clientes');
   const adminDeleteCustomerBtn = document.getElementById('admin-delete-customer');
 
   if (knownBtn) {
@@ -37,81 +38,79 @@ export function initAtendimento() {
     });
   }
 
+  if (adminClientesBtn) {
+    adminClientesBtn.addEventListener('click', () => {
+      window.location.href = '/admin/clientes';
+    });
+  }
+
   if (adminDeleteCustomerBtn) {
     adminDeleteCustomerBtn.addEventListener('click', () => {
       const customerNameEl = document.getElementById('cust-name');
       const customerName = customerNameEl ? customerNameEl.textContent : '';
       console.warn(`(Simulação) Botão de apagar cliente '${customerName}' clicado.`);
-
-        // Lógica para tipo de cliente (PF/PJ) e CPF/CNPJ
-        const tipoClienteSelect = document.getElementById('new-tipo-cliente');
-        const docContainer = document.getElementById('new-doc-container');
-        const docInput = document.getElementById('new-doc');
-        const docLabel = document.getElementById('new-doc-label');
-
-        if (tipoClienteSelect && docContainer && docInput && docLabel) {
-          tipoClienteSelect.addEventListener('change', (e) => {
-            const tipo = e.target.value;
-            if (tipo === 'PF' || tipo === 'PJ') {
-              docContainer.classList.remove('hidden');
-              docLabel.textContent = tipo === 'PF' ? 'CPF' : 'CNPJ';
-              docInput.placeholder = tipo === 'PF' ? '000.000.000-00' : '00.000.000/0000-00';
-              docInput.value = '';
-            } else {
-              docContainer.classList.add('hidden');
-              docInput.value = '';
-            }
-          });
-
-          // Formatação automática de CPF/CNPJ durante digitação
-          docInput.addEventListener('input', (e) => {
-            const input = e.target;
-            const oldValue = input.value;
-            const oldCursor = input.selectionStart;
-            const digits = oldValue.replace(/\D/g, '');
-      
-            let formatted = '';
-            const tipo = tipoClienteSelect.value;
-      
-            if (tipo === 'PF') {
-              // CPF: 000.000.000-00
-              if (digits.length <= 11) {
-                formatted = digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-                if (digits.length <= 3) formatted = digits;
-                else if (digits.length <= 6) formatted = digits.replace(/(\d{3})(\d+)/, '$1.$2');
-                else if (digits.length <= 9) formatted = digits.replace(/(\d{3})(\d{3})(\d+)/, '$1.$2.$3');
-              } else {
-                formatted = digits.substring(0, 11).replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-              }
-            } else if (tipo === 'PJ') {
-              // CNPJ: 00.000.000/0000-00
-              if (digits.length <= 14) {
-                if (digits.length <= 2) formatted = digits;
-                else if (digits.length <= 5) formatted = digits.replace(/(\d{2})(\d+)/, '$1.$2');
-                else if (digits.length <= 8) formatted = digits.replace(/(\d{2})(\d{3})(\d+)/, '$1.$2.$3');
-                else if (digits.length <= 12) formatted = digits.replace(/(\d{2})(\d{3})(\d{3})(\d+)/, '$1.$2.$3/$4');
-                else formatted = digits.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
-              } else {
-                formatted = digits.substring(0, 14).replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
-              }
-            } else {
-              formatted = digits;
-            }
-      
-            input.value = formatted;
-      
-            // Calcula nova posição do cursor
-            const digitsBeforeCursor = oldValue.substring(0, oldCursor).replace(/\D/g, '').length;
-            let newCursor = 0;
-            let digitCount = 0;
-            for (let i = 0; i < formatted.length && digitCount < digitsBeforeCursor; i++) {
-              if (/\d/.test(formatted[i])) digitCount++;
-              newCursor = i + 1;
-            }
-            input.setSelectionRange(newCursor, newCursor);
-          });
-        }
       window.location.href = '/atendimento/idle';
+    });
+  }
+
+  // Inicializa lógica de Tipo de Cliente (PF/PJ) e CPF/CNPJ na página de novo atendimento
+  const tipoClienteSelect = document.getElementById('new-tipo-cliente');
+  const docContainer = document.getElementById('new-doc-container');
+  const docInput = document.getElementById('new-doc');
+  const docLabel = document.getElementById('new-doc-label');
+
+  if (tipoClienteSelect && docContainer && docInput && docLabel) {
+    const updateDocField = () => {
+      const tipo = tipoClienteSelect.value;
+      if (tipo === 'PF' || tipo === 'PJ') {
+        docContainer.classList.remove('hidden');
+        docLabel.textContent = (tipo === 'PF' ? 'CPF' : 'CNPJ') + ' *';
+        docInput.placeholder = tipo === 'PF' ? '000.000.000-00' : '00.000.000/0000-00';
+      } else {
+        docContainer.classList.add('hidden');
+        docInput.value = '';
+      }
+    };
+    tipoClienteSelect.addEventListener('change', updateDocField);
+    updateDocField(); // estado inicial
+
+    docInput.addEventListener('input', (e) => {
+      const input = e.target;
+      const oldValue = input.value;
+      const oldCursor = input.selectionStart;
+      const digits = oldValue.replace(/\D/g, '');
+      let formatted = '';
+      const tipo = tipoClienteSelect.value;
+      if (tipo === 'PF') {
+        if (digits.length <= 11) {
+          formatted = digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+          if (digits.length <= 3) formatted = digits;
+          else if (digits.length <= 6) formatted = digits.replace(/(\d{3})(\d+)/, '$1.$2');
+          else if (digits.length <= 9) formatted = digits.replace(/(\d{3})(\d{3})(\d+)/, '$1.$2.$3');
+        } else {
+          formatted = digits.substring(0, 11).replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+        }
+      } else if (tipo === 'PJ') {
+        if (digits.length <= 14) {
+          if (digits.length <= 2) formatted = digits;
+          else if (digits.length <= 5) formatted = digits.replace(/(\d{2})(\d+)/, '$1.$2');
+          else if (digits.length <= 8) formatted = digits.replace(/(\d{2})(\d{3})(\d+)/, '$1.$2.$3');
+          else if (digits.length <= 12) formatted = digits.replace(/(\d{2})(\d{3})(\d{3})(\d+)/, '$1.$2.$3/$4');
+          else formatted = digits.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+        } else {
+          formatted = digits.substring(0, 14).replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+        }
+      } else {
+        formatted = digits;
+      }
+      input.value = formatted;
+      const digitsBeforeCursor = oldValue.substring(0, oldCursor).replace(/\D/g, '').length;
+      let newCursor = 0; let digitCount = 0;
+      for (let i = 0; i < formatted.length && digitCount < digitsBeforeCursor; i++) {
+        if (/\d/.test(formatted[i])) digitCount++;
+        newCursor = i + 1;
+      }
+      input.setSelectionRange(newCursor, newCursor);
     });
   }
 
@@ -722,7 +721,7 @@ async function loadProducts() {
     if (knownContainer) {
       knownContainer.innerHTML = products.map(product => `
         <div class="flex items-center justify-between px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 shadow-sm transition">
-          <div class="flex-1 items-center ">
+          <div class="flex items-center gap-2">
             <input type="checkbox" value="${product.name}" class="product-checkbox w-5 h-5 flex-shrink-0 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2" />
             <span class="flex-1 text-sm font-medium text-gray-800 min-w-0">${product.name}</span>
           </div>
@@ -736,7 +735,7 @@ async function loadProducts() {
     if (newContainer) {
       newContainer.innerHTML = products.map(product => `
         <div class="flex items-center justify-between px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 shadow-sm transition">
-          <div class="flex-1 items-center ">
+          <div class="flex items-center gap-2">
             <input type="checkbox" value="${product.name}" class="product-checkbox w-5 h-5 flex-shrink-0 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2" />
             <span class="flex-1 text-sm font-medium text-gray-800 min-w-0">${product.name}</span>
           </div>

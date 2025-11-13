@@ -2,6 +2,33 @@ export function initAdmin() {
   const usersTbody = document.getElementById('users-table-body');
   const logsTbody = document.getElementById('logs-table-body');
   const nav = document.getElementById('admin-nav');
+  const backBtn = document.getElementById('btn-back');
+
+  if (backBtn) backBtn.onclick = () => { window.location.href = '/atendimento/idle'; };
+
+  // Controle de visibilidade de abas por papel
+  const rawUser = localStorage.getItem('user');
+  let role = null;
+  try { role = rawUser ? JSON.parse(rawUser).role : null; } catch (_) {}
+  if (nav && role) {
+    const links = nav.querySelectorAll('a.admin-tab-button');
+    links.forEach(a => {
+      const href = a.getAttribute('href') || '';
+      if (role !== 'admin') {
+        // Atendente: só pode ver Gerenciar Clientes
+        if (href.includes('/admin/usuarios') || href.includes('/admin/logs')) {
+          a.classList.add('hidden');
+        }
+      }
+    });
+    // Redireciona atendente para clientes se estiver em outra aba
+    if (role !== 'admin') {
+      const path = window.location.pathname;
+      if (path.startsWith('/admin') && !path.includes('/admin/clientes')) {
+        window.location.href = '/admin/clientes';
+      }
+    }
+  }
 
   if (usersTbody) {
     fetch('/api/usuarios').then(r => r.json()).then(data => {
@@ -93,11 +120,21 @@ export function initAdmin() {
     });
   }
 
-  // Listener do nav fora do template para não vazar na UI
+  // Evita recarregar a página ao clicar na aba atual
   if (nav) {
     nav.addEventListener('click', (e) => {
-      if (e.target.matches('a.admin-tab-button')) {
-        // Links já navegam; nada a fazer aqui.
+      const a = e.target.closest && e.target.closest('a.admin-tab-button');
+      if (!a) return;
+      const href = a.getAttribute('href') || '';
+      if (window.location.pathname === href) {
+        e.preventDefault();
+        return;
+      }
+      // Para atendente: bloquear abas que não são clientes
+      const isAdmin = role === 'admin';
+      if (!isAdmin && href !== '/admin/clientes') {
+        e.preventDefault();
+        return;
       }
     });
   }

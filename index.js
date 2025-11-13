@@ -36,7 +36,8 @@ const pages = [
   { path: '/atendimento/identificado', file: 'atendimento_identificado.html', title: 'Atendimento - Identificado' },
   { path: '/atendimento/novo', file: 'atendimento_novo.html', title: 'Atendimento - Novo Cliente' },
   { path: '/admin/usuarios', file: 'admin_usuarios.html', title: 'Admin - Usuários' },
-  { path: '/admin/logs', file: 'admin_logs.html', title: 'Admin - Logs' }
+  { path: '/admin/logs', file: 'admin_logs.html', title: 'Admin - Logs' },
+  { path: '/admin/clientes', file: 'admin_clientes.html', title: 'Admin - Clientes' }
 ];
 
 pages.forEach(({ path, redirect, file, title }) => {
@@ -52,8 +53,12 @@ app.post('/api/login', AuthController.login);
 app.get('/api/usuarios', UserController.getAll);
 app.get('/api/logs', LogController.getAll);
 app.get('/api/clientes/search', ClientController.search);
+app.get('/api/clientes', ClientController.list);
+app.get('/api/clientes/id/:id', ClientController.getById);
 app.get('/api/clientes/:telefone', ClientController.getByPhone);
 app.post('/api/clientes', ClientController.create);
+app.put('/api/clientes/:id', ClientController.update);
+app.delete('/api/clientes/:id', ClientController.remove);
 // Telefones
 app.get('/api/clientes/:id/telefones', ClientController.listPhones);
 app.post('/api/clientes/:id/telefones', ClientController.addPhone);

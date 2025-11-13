@@ -168,6 +168,23 @@ class DAO {
       throw error;
     }
   }
+
+  // ===== CLIENTES (Admin) =====
+  static async listClients({ page = 1, pageSize = 20, search = '' }) {
+    return await db.listClients({ page, pageSize, search });
+  }
+
+  static async getClientById(id) {
+    return await db.getClientById(id);
+  }
+
+  static async updateClient(id, data) {
+    return await db.updateClient(id, data);
+  }
+
+  static async deleteClient(id) {
+    return await db.deleteClient(id);
+  }
 }
 
 module.exports = DAO;

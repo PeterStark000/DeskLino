@@ -173,6 +173,139 @@ async function searchClients(searchTerm) {
 }
 
 // =========================
+// Admin - Clientes
+// =========================
+async function listClients({ page = 1, pageSize = 20, search = '' }) {
+  const offset = (page - 1) * pageSize;
+  const term = `%${search}%`;
+  const where = search ? 'WHERE c.nome LIKE ? OR c.email LIKE ?' : '';
+  const params = search ? [term, term] : [];
+
+  const sql = `
+    SELECT 
+      c.cod_cliente as id,
+      c.nome as name,
+      c.email,
+      c.tipo_cliente,
+      c.observacoes as notes,
+      pf.cpf, pj.cnpj,
+      (SELECT t.numero FROM Telefone t WHERE t.cod_cliente = c.cod_cliente LIMIT 1) as phone
+    FROM Cliente c
+    LEFT JOIN Pessoa_Fisica pf ON pf.cod_cliente = c.cod_cliente
+    LEFT JOIN Pessoa_Juridica pj ON pj.cod_cliente = c.cod_cliente
+    ${where}
+    ORDER BY c.cod_cliente DESC
+    LIMIT ? OFFSET ?
+  `;
+  const rows = await query(sql, [...params, pageSize, offset]);
+
+  const countSql = `SELECT COUNT(*) as total FROM Cliente c ${where}`;
+  const totalRows = await query(countSql, params);
+  const total = totalRows[0]?.total || 0;
+  return { page, pageSize, total, rows };
+}
+
+async function getClientById(id) {
+  const sql = `
+    SELECT 
+      c.cod_cliente as id,
+      c.nome as name,
+      c.email,
+      c.tipo_cliente,
+      c.observacoes as notes,
+      (SELECT t.numero FROM Telefone t WHERE t.cod_cliente = c.cod_cliente LIMIT 1) as phone,
+      pf.cpf, pj.cnpj,
+      e.logradouro as address, e.numero as number, e.complemento, e.bairro, e.ponto_ref as ref
+    FROM Cliente c
+    LEFT JOIN Pessoa_Fisica pf ON pf.cod_cliente = c.cod_cliente
+    LEFT JOIN Pessoa_Juridica pj ON pj.cod_cliente = c.cod_cliente
+    LEFT JOIN Endereco_Entrega e ON e.cod_cliente = c.cod_cliente AND e.principal = 'S'
+    WHERE c.cod_cliente = ?
+  `;
+  const rows = await query(sql, [id]);
+  return rows[0] || null;
+}
+
+async function updateClient(id, { name, email, tipo_cliente, documento, notes }) {
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    if (name || email || tipo_cliente || notes) {
+      const fields = [];
+      const values = [];
+      if (name) { fields.push('nome = ?'); values.push(name); }
+      if (email) { fields.push('email = ?'); values.push(email); }
+      if (tipo_cliente) { fields.push('tipo_cliente = ?'); values.push(tipo_cliente); }
+      if (notes !== undefined) { fields.push('observacoes = ?'); values.push(notes); }
+      if (fields.length) {
+        await txExecute(connection, `UPDATE Cliente SET ${fields.join(', ')} WHERE cod_cliente = ?`, [...values, id]);
+      }
+    }
+    // Documento
+    if (documento && tipo_cliente) {
+      if (tipo_cliente === 'PF') {
+        await txExecute(connection, 'DELETE FROM Pessoa_Juridica WHERE cod_cliente = ?', [id]);
+        // upsert PF
+        const pf = await txQuery(connection, 'SELECT 1 FROM Pessoa_Fisica WHERE cod_cliente = ? LIMIT 1', [id]);
+        if (pf[0].length) {
+          await txExecute(connection, 'UPDATE Pessoa_Fisica SET cpf = ? WHERE cod_cliente = ?', [documento, id]);
+        } else {
+          await txExecute(connection, 'INSERT INTO Pessoa_Fisica (cod_cliente, cpf) VALUES (?, ?)', [id, documento]);
+        }
+      } else if (tipo_cliente === 'PJ') {
+        await txExecute(connection, 'DELETE FROM Pessoa_Fisica WHERE cod_cliente = ?', [id]);
+        const pj = await txQuery(connection, 'SELECT 1 FROM Pessoa_Juridica WHERE cod_cliente = ? LIMIT 1', [id]);
+        if (pj[0].length) {
+          await txExecute(connection, 'UPDATE Pessoa_Juridica SET cnpj = ? WHERE cod_cliente = ?', [documento, id]);
+        } else {
+          await txExecute(connection, 'INSERT INTO Pessoa_Juridica (cod_cliente, cnpj) VALUES (?, ?)', [id, documento]);
+        }
+      }
+    }
+    await connection.commit();
+    return { success: true };
+  } catch (e) {
+    await connection.rollback();
+    throw e;
+  } finally {
+    connection.release();
+  }
+}
+
+async function deleteClient(id) {
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    // Bloqueia se existir pedidos
+    const [cnt] = await txQuery(connection, `
+      SELECT COUNT(*) as total
+      FROM Atendimento a
+      INNER JOIN Pedido p ON p.cod_atendimento = a.cod_atendimento
+      WHERE a.cod_cliente = ?
+    `, [id]);
+    if (cnt[0].total > 0) {
+      throw new Error('Não é possível apagar: cliente possui pedidos');
+    }
+    // Remove dependências
+    await txExecute(connection, 'DELETE FROM Pessoa_Fisica WHERE cod_cliente = ?', [id]);
+    await txExecute(connection, 'DELETE FROM Pessoa_Juridica WHERE cod_cliente = ?', [id]);
+    await txExecute(connection, 'DELETE FROM Endereco_Entrega WHERE cod_cliente = ?', [id]);
+    await txExecute(connection, 'DELETE FROM Telefone WHERE cod_cliente = ?', [id]);
+    // Remove atendimentos sem pedido (logs)
+    await txExecute(connection, 'DELETE FROM Atendimento WHERE cod_cliente = ?', [id]);
+    // Remove cliente
+    await txExecute(connection, 'DELETE FROM Cliente WHERE cod_cliente = ?', [id]);
+    await connection.commit();
+    return { success: true };
+  } catch (e) {
+    await connection.rollback();
+    throw e;
+  } finally {
+    connection.release();
+  }
+}
+
+// =========================
 // Telefones (cliente)
 // =========================
 async function getClientPhones(clientId) {
@@ -544,6 +677,10 @@ module.exports = {
   addAddress,
   setPrimaryAddress,
   deleteAddress,
+  listClients,
+  getClientById,
+  updateClient,
+  deleteClient,
   // Pedidos
   getClientOrderHistory,
   createOrder,

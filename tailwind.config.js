@@ -4,6 +4,10 @@ module.exports = {
     "./src/pages/**/*.html",
     "./src/scripts/**/*.js"
   ],
+  safelist: [
+    // Garantir utilitários de espaçamento usados dinamicamente
+    'gap-0','gap-1','gap-2','gap-3','gap-4','gap-5','gap-6','gap-8','gap-10','gap-12'
+  ],
   theme: {
     extend: {
       fontFamily: {

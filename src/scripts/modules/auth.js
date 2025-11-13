@@ -41,7 +41,8 @@ export function initAuth() {
     atendenteNome.textContent = user.name;
     userRoleDisplay.textContent = user.role;
     if (adminToggleButton) {
-      if (user.role === 'admin') adminToggleButton.classList.remove('hidden');
+      // Exibe o botão do painel para admin e atendente
+      if (user.role === 'admin' || user.role === 'atendente') adminToggleButton.classList.remove('hidden');
       else adminToggleButton.classList.add('hidden');
     }
   }

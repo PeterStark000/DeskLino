@@ -1,6 +1,31 @@
 const DAO = require('../server/dao');
 
 class ClientController {
+  static async list(req, res) {
+    try {
+      const page = parseInt(req.query.page || '1', 10);
+      const pageSize = parseInt(req.query.pageSize || '20', 10);
+      const search = (req.query.search || '').trim();
+      const result = await DAO.listClients({ page, pageSize, search });
+      res.json(result);
+    } catch (error) {
+      console.error('[ClientController.list]', error);
+      res.status(500).json({ error: 'Erro ao listar clientes' });
+    }
+  }
+
+  static async getById(req, res) {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) return res.status(400).json({ error: 'ID inválido' });
+      const customer = await DAO.getClientById(id);
+      if (!customer) return res.status(404).json({ error: 'Cliente não encontrado' });
+      res.json({ customer });
+    } catch (error) {
+      console.error('[ClientController.getById]', error);
+      res.status(500).json({ error: 'Erro ao buscar cliente' });
+    }
+  }
   static async getByPhone(req, res) {
     try {
       const phone = decodeURIComponent(req.params.telefone);
@@ -45,6 +70,31 @@ class ClientController {
     } catch (error) {
       console.error('[ClientController.create]', error);
       res.status(500).json({ error: error.message || 'Erro ao criar cliente' });
+    }
+  }
+
+  static async update(req, res) {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) return res.status(400).json({ error: 'ID inválido' });
+      const { name, email, tipo_cliente, documento, notes } = req.body || {};
+      await DAO.updateClient(id, { name, email, tipo_cliente, documento, notes });
+      res.json({ success: true });
+    } catch (error) {
+      console.error('[ClientController.update]', error);
+      res.status(500).json({ error: error.message || 'Erro ao atualizar cliente' });
+    }
+  }
+
+  static async remove(req, res) {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) return res.status(400).json({ error: 'ID inválido' });
+      await DAO.deleteClient(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('[ClientController.remove]', error);
+      res.status(500).json({ error: error.message || 'Erro ao apagar cliente' });
     }
   }
 
