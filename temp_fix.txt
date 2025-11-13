@@ -1,0 +1,22 @@
+    // 4. Insere Endereco_Entrega (se fornecido)
+    if (address && bairro) {
+      await txExecute(connection,
+        'INSERT INTO Endereco_Entrega (nome_end, logradouro, numero, complemento, bairro, ponto_ref, cod_cliente, principal) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        ['Principal', address, number || 'S/N', complemento || null, bairro, ref || null, cod_cliente, 'S']
+      );
+    }
+    
+    // 5. Insere CPF ou CNPJ conforme tipo_cliente
+    if (documento) {
+      if (tipo_cliente === 'PF') {
+        await txExecute(connection,
+          'INSERT INTO Pessoa_Fisica (cod_cliente, cpf) VALUES (?, ?)',
+          [cod_cliente, documento]
+        );
+      } else if (tipo_cliente === 'PJ') {
+        await txExecute(connection,
+          'INSERT INTO Pessoa_Juridica (cod_cliente, cnpj) VALUES (?, ?)',
+          [cod_cliente, documento]
+        );
+      }
+    }

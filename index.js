@@ -51,10 +51,21 @@ pages.forEach(({ path, redirect, file, title }) => {
 app.post('/api/login', AuthController.login);
 app.get('/api/usuarios', UserController.getAll);
 app.get('/api/logs', LogController.getAll);
+app.get('/api/clientes/search', ClientController.search);
 app.get('/api/clientes/:telefone', ClientController.getByPhone);
 app.post('/api/clientes', ClientController.create);
+// Telefones
+app.get('/api/clientes/:id/telefones', ClientController.listPhones);
+app.post('/api/clientes/:id/telefones', ClientController.addPhone);
+// Endereços
+app.get('/api/clientes/:id/enderecos', ClientController.listAddresses);
+app.post('/api/clientes/:id/enderecos', ClientController.addAddress);
+app.put('/api/clientes/:id/enderecos/:enderecoId/principal', ClientController.setPrimaryAddress);
+app.delete('/api/clientes/:id/enderecos/:enderecoId', ClientController.deleteAddress);
+app.get('/api/clientes/:id/pedidos', ClientController.getOrderHistory);
 app.get('/api/produtos', ProductController.getAll);
 app.post('/api/pedidos', OrderController.create);
+app.get('/api/atendimentos/:id/pedido', OrderController.getByAtendimento);
 
 // Start server e testa conexão DB
 app.listen(port, async () => {

@@ -19,6 +19,7 @@
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Atendente</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Telefone</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200" id="logs-table-body"></tbody>
@@ -27,3 +28,14 @@
     </div>
   </div>
 </main>
+<dialog id="order-modal" class="rounded-lg p-0 w-full max-w-md shadow-xl border border-gray-200">
+  <div class="p-6 bg-white rounded-lg">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold text-gray-800">Detalhes do Pedido</h3>
+      <button id="order-modal-close" class="text-gray-500 hover:text-gray-700">Fechar</button>
+    </div>
+    <div id="order-modal-body" class="space-y-4">
+      <p class="text-sm text-gray-600">Carregando...</p>
+    </div>
+  </div>
+</dialog>
