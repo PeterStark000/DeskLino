@@ -1,5 +1,29 @@
 let state = { page: 1, pageSize: 20, search: '' };
 
+function formatDocument(digits, tipo) {
+  if (tipo === 'PF') {
+    // CPF: 000.000.000-00
+    if (digits.length <= 11) {
+      if (digits.length <= 3) return digits;
+      if (digits.length <= 6) return digits.replace(/(\d{3})(\d+)/, '$1.$2');
+      if (digits.length <= 9) return digits.replace(/(\d{3})(\d{3})(\d+)/, '$1.$2.$3');
+      return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    }
+    return digits.substring(0, 11).replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+  } else if (tipo === 'PJ') {
+    // CNPJ: 00.000.000/0000-00
+    if (digits.length <= 14) {
+      if (digits.length <= 2) return digits;
+      if (digits.length <= 5) return digits.replace(/(\d{2})(\d+)/, '$1.$2');
+      if (digits.length <= 8) return digits.replace(/(\d{2})(\d{3})(\d+)/, '$1.$2.$3');
+      if (digits.length <= 12) return digits.replace(/(\d{2})(\d{3})(\d{3})(\d+)/, '$1.$2.$3/$4');
+      return digits.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+    }
+    return digits.substring(0, 14).replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+  }
+  return digits;
+}
+
 async function fetchClients() {
   const params = new URLSearchParams();
   params.set('page', String(state.page));
@@ -187,12 +211,44 @@ function openEditDialog(customer) {
   document.getElementById('edit-email').value = customer.email || '';
   const tipo = customer.tipo_cliente || 'PF';
   document.getElementById('edit-tipo').value = tipo;
-  document.getElementById('edit-doc').value = (customer.cpf || customer.cnpj || '') || '';
+  
+  const editDocInput = document.getElementById('edit-doc');
+  const editTipoSelect = document.getElementById('edit-tipo');
+  
+  // Formata documento inicial
+  const rawDoc = (customer.cpf || customer.cnpj || '');
+  editDocInput.value = formatDocument(rawDoc, tipo);
+  
   document.getElementById('edit-notes').value = customer.notes || '';
   dlg.dataset.id = String(customer.id);
   if (typeof dlg.showModal === 'function') dlg.showModal();
 
   document.getElementById('edit-cancel').onclick = () => dlg.close();
+  
+  // Reformata documento ao mudar tipo
+  editTipoSelect.onchange = () => {
+    const digits = editDocInput.value.replace(/\D/g, '');
+    editDocInput.value = formatDocument(digits, editTipoSelect.value);
+  };
+  
+  // Formatação em tempo real durante digitação
+  editDocInput.oninput = (e) => {
+    const input = e.target;
+    const oldValue = input.value;
+    const oldCursor = input.selectionStart;
+    const digits = oldValue.replace(/\D/g, '');
+    const formatted = formatDocument(digits, editTipoSelect.value);
+    input.value = formatted;
+    
+    // Preserva posição do cursor
+    const digitsBeforeCursor = oldValue.substring(0, oldCursor).replace(/\D/g, '').length;
+    let newCursor = 0, digitCount = 0;
+    for (let i = 0; i < formatted.length && digitCount < digitsBeforeCursor; i++) {
+      if (/\d/.test(formatted[i])) digitCount++;
+      newCursor = i + 1;
+    }
+    input.setSelectionRange(newCursor, newCursor);
+  };
 
   // Endereços
   loadAddresses(customer.id);
