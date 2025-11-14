@@ -91,7 +91,7 @@ DROP TABLE IF EXISTS `produto`;
 CREATE TABLE `produto` (
   `cod_produto` int(11) NOT NULL,
   `nome` varchar(100) NOT NULL,
-  `descricao` text DEFAULT NULL,
+  `descricao` varchar(255) DEFAULT NULL,
   `valor` decimal(6,2) NOT NULL,
   `qtde_estoque` smallint(6) NOT NULL DEFAULT 0,
   `disponivel` char(1) NOT NULL DEFAULT 'S',
@@ -111,7 +111,7 @@ CREATE TABLE `pedido` (
   `status` varchar(30) NOT NULL,
   `forma_pag` varchar(30) NOT NULL,
   `valor_total` decimal(8,2) NOT NULL,
-  `observacao` text DEFAULT NULL,
+  `observacao` varchar(255) DEFAULT NULL,
   `cod_atendimento` int(11) NOT NULL,
   `cod_endereco` mediumint(9) NOT NULL,
   PRIMARY KEY (`cod_pedido`),
