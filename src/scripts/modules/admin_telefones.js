@@ -47,12 +47,7 @@ function renderPhones({ rows, page, pageSize, total }) {
         toast.success('Telefone apagado!');
         await reload();
       } else if (action === 'edit') {
-        const numero = prompt('Novo número para o telefone:', btn.dataset.numero || '');
-        if (!numero) return;
-        const resp = await fetch(`/api/telefones/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ numero }) });
-        if (!resp.ok) { toast.error('Falha ao atualizar'); return; }
-        toast.success('Telefone atualizado!');
-        await reload();
+        openEditModal(id, btn.dataset.numero || '');
       }
     });
   });
@@ -61,6 +56,65 @@ function renderPhones({ rows, page, pageSize, total }) {
 async function reload() {
   const data = await fetchPhones();
   renderPhones(data);
+}
+
+function openEditModal(phoneId, currentNumber) {
+  const dialog = /** @type {HTMLDialogElement|null} */ (document.getElementById('edit-phone-modal'));
+  const inputNumber = document.getElementById('edit-phone-modal-number');
+  const btnCancel = document.getElementById('edit-phone-cancel');
+  const btnConfirm = document.getElementById('edit-phone-confirm');
+
+  if (!dialog || !inputNumber) return;
+
+  // Preencher com valor atual formatado
+  inputNumber.value = Utils.formatPhone(currentNumber);
+
+  // Máscara de telefone no input
+  inputNumber.oninput = (e) => {
+    const el = e.target;
+    const oldValue = el.value;
+    const oldCursor = el.selectionStart;
+    const formatted = Utils.formatPhone(oldValue);
+    el.value = formatted;
+    const digitsBefore = Utils.onlyDigits(oldValue.substring(0, oldCursor || 0)).length;
+    let newCursor = 0, count = 0;
+    for (let i = 0; i < formatted.length && count < digitsBefore; i++) {
+      if (/\d/.test(formatted[i])) count++;
+      newCursor = i + 1;
+    }
+    el.setSelectionRange(newCursor, newCursor);
+  };
+
+  // Botão cancelar
+  btnCancel.onclick = () => {
+    dialog.close();
+  };
+
+  // Botão confirmar
+  btnConfirm.onclick = async () => {
+    const numero = inputNumber.value.trim();
+    if (!numero) {
+      toast.warning('Informe o novo número');
+      return;
+    }
+    try {
+      const resp = await fetch(`/api/telefones/${phoneId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ numero })
+      });
+      if (!resp.ok) throw new Error('Falha ao atualizar');
+      toast.success('Telefone atualizado!');
+      dialog.close();
+      await reload();
+    } catch (e) {
+      toast.error(e.message || 'Erro ao atualizar telefone');
+    }
+  };
+
+  try {
+    dialog.showModal();
+  } catch {}
 }
 
 function init() {
