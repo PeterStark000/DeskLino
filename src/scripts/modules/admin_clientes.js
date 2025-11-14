@@ -237,7 +237,7 @@ function openEditDialog(customer) {
   dlg.dataset.id = String(customer.id);
   if (typeof dlg.showModal === 'function') dlg.showModal();
 
-  document.getElementById('edit-cancel').onclick = () => dlg.close();
+  document.getElementById('edit-cancel').onclick = () => dlg.close(), toggleAddrForm(false);
   
   // Reformata documento ao mudar tipo
   editTipoSelect.onchange = () => {
