@@ -1,4 +1,5 @@
 import { toast } from './toast.js';
+import { Utils } from './utils.js';
 
 let state = { page: 1, pageSize: 20, search: '' };
 
@@ -88,14 +89,6 @@ function init() {
   const btnCancel = document.getElementById('add-phone-cancel');
   const btnConfirm = document.getElementById('add-phone-confirm');
 
-  function formatPhone(value) {
-    const numbers = (value || '').replace(/\D/g, '');
-    if (numbers.length <= 2) return numbers;
-    if (numbers.length <= 6) return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
-    if (numbers.length <= 10) return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 6)}-${numbers.slice(6)}`;
-    return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
-  }
-
   function resetModal() {
     if (inputClient) inputClient.value = '';
     if (inputNumber) inputNumber.value = '';
@@ -112,9 +105,9 @@ function init() {
       const el = e.target;
       const oldValue = el.value;
       const oldCursor = el.selectionStart;
-      const formatted = formatPhone(oldValue);
+      const formatted = Utils.formatPhone(oldValue);
       el.value = formatted;
-      const digitsBefore = (oldValue.substring(0, oldCursor || 0).replace(/\D/g, '')).length;
+      const digitsBefore = Utils.onlyDigits(oldValue.substring(0, oldCursor || 0)).length;
       let newCursor = 0, count = 0;
       for (let i = 0; i < formatted.length && count < digitsBefore; i++) {
         if (/\d/.test(formatted[i])) count++;

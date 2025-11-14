@@ -1,4 +1,5 @@
 import { toast, setPendingToast } from './toast.js';
+import { Utils } from './utils.js';
 
 export function initAtendimento() {
   // Carregar produtos dinamicamente
@@ -219,7 +220,7 @@ export function initAtendimento() {
         formatted = digits;
       }
       input.value = formatted;
-      const digitsBeforeCursor = oldValue.substring(0, oldCursor).replace(/\D/g, '').length;
+      const digitsBeforeCursor = Utils.onlyDigits(oldValue.substring(0, oldCursor)).length;
       let newCursor = 0; let digitCount = 0;
       for (let i = 0; i < formatted.length && digitCount < digitsBeforeCursor; i++) {
         if (/\d/.test(formatted[i])) digitCount++;
@@ -470,7 +471,7 @@ async function saveNewClientAndOrder(selectedProducts, createOrder) {
       return;
     }
     
-    const digitsOnly = documento.replace(/\D/g, '');
+    const digitsOnly = Utils.onlyDigits(documento);
     if (tipoCliente === 'PF' && digitsOnly.length !== 11) {
       toast.warning('CPF deve ter 11 dígitos.');
       return;
@@ -625,7 +626,7 @@ async function loadClientData(phone) {
     if (typeEl) typeEl.textContent = customer.tipo_cliente === 'PF' ? 'Pessoa Física' : (customer.tipo_cliente === 'PJ' ? 'Pessoa Jurídica' : '-');
     if (docEl) {
       const docVal = customer.cpf || customer.cnpj || '';
-      docEl.textContent = formatCpfCnpj(docVal);
+      docEl.textContent = Utils.formatCpfCnpj(docVal);
     }
     if (notesEl) notesEl.value = customer.notes || '';
     
@@ -935,27 +936,7 @@ function getSelectedProducts(context) {
 /**
  * Formata número de telefone com máscara (XX) XXXX-XXXX ou (XX) XXXXX-XXXX
  */
-function formatPhone(value) {
-  const numbers = value.replace(/\D/g, '');
-  if (numbers.length <= 2) return numbers;
-  if (numbers.length <= 6) return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
-  if (numbers.length <= 10) return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 6)}-${numbers.slice(6)}`;
-  return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
-}
-
-/**
- * Formata CPF/CNPJ conforme quantidade de dígitos
- */
-function formatCpfCnpj(value) {
-  const digits = (value || '').replace(/\D/g, '');
-  if (digits.length === 11) {
-    return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-  }
-  if (digits.length === 14) {
-    return digits.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
-  }
-  return value || '-';
-}
+// formatPhone e formatCpfCnpj migraram para Utils
 
 /**
  * Abre modal de simulação de chamada
@@ -978,11 +959,11 @@ function openCallModal({ defaultPhone, route }) {
     const input = e.target;
     const oldValue = input.value;
     const oldCursor = input.selectionStart;
-    const formatted = formatPhone(oldValue);
+    const formatted = Utils.formatPhone(oldValue);
     input.value = formatted;
     
     // Calcula nova posição do cursor baseada nos dígitos antes do cursor
-    const digitsBeforeCursor = oldValue.substring(0, oldCursor).replace(/\D/g, '').length;
+    const digitsBeforeCursor = Utils.onlyDigits(oldValue.substring(0, oldCursor)).length;
     let newCursor = 0;
     let digitCount = 0;
     for (let i = 0; i < formatted.length && digitCount < digitsBeforeCursor; i++) {
