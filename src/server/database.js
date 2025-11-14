@@ -109,6 +109,24 @@ async function getAllUsers() {
   return await query(sql);
 }
 
+/** Busca usuário por id */
+async function getUserById(id) {
+  const sql = 'SELECT cod_atendente as id, login as username, nome as name, tipo_usuario as role FROM Atendente WHERE cod_atendente = ? LIMIT 1';
+  const rows = await query(sql, [id]);
+  return rows.length ? rows[0] : null;
+}
+
+/**
+ * Atualiza o nível de acesso (tipo_usuario) de um atendente
+ */
+async function updateUserRole(id, role) {
+  const allowed = ['admin', 'atendente'];
+  if (!allowed.includes(role)) throw new Error('Papel inválido');
+  const sql = 'UPDATE Atendente SET tipo_usuario = ? WHERE cod_atendente = ?';
+  await query(sql, [role, id]);
+  return { success: true };
+}
+
 /**
  * Busca cliente por número de telefone
  * Tabelas: Cliente, Telefone, Endereco_Entrega
@@ -708,6 +726,8 @@ module.exports = {
   // Usuários
   getUserByUsername,
   getAllUsers,
+  getUserById,
+  updateUserRole,
   // Clientes
   getClientByPhone,
   searchClients,

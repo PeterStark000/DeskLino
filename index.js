@@ -53,6 +53,7 @@ pages.forEach(({ path, redirect, file, title }) => {
 // ===== ROTAS API (usando Controllers com padrão DAO) =====
 app.post('/api/login', AuthController.login);
 app.get('/api/usuarios', UserController.getAll);
+app.put('/api/usuarios/:id/role', UserController.updateRole);
 app.get('/api/logs', LogController.getAll);
 app.get('/api/clientes/search', ClientController.search);
 app.get('/api/clientes', ClientController.list);

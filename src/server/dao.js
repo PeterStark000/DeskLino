@@ -25,6 +25,24 @@ class DAO {
     }
   }
 
+  static async getUserById(id) {
+    try {
+      return await db.getUserById(id);
+    } catch (error) {
+      console.warn('Erro ao buscar usuário por id:', error.message);
+      return EXAMPLE_users.find(u => u.id === id) || null;
+    }
+  }
+
+  static async updateUserRole(id, role) {
+    try {
+      return await db.updateUserRole(id, role);
+    } catch (error) {
+      console.error('Erro ao atualizar papel do usuário:', error.message);
+      throw error;
+    }
+  }
+
   // ===== LOGS (Atendimentos) =====
   static async getAllLogs() {
     try {

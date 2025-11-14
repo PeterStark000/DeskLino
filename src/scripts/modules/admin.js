@@ -1,3 +1,4 @@
+import { toast } from './toast.js';
 export function initAdmin() {
   const usersTbody = document.getElementById('users-table-body');
   const logsTbody = document.getElementById('logs-table-body');
@@ -32,20 +33,41 @@ export function initAdmin() {
 
   if (usersTbody) {
     fetch('/api/usuarios').then(r => r.json()).then(data => {
-      usersTbody.innerHTML = data.users.map(u => `
+      usersTbody.innerHTML = data.users.map(u => {
+        const isProtected = (u.id === 1) || ['admin','admin.user'].includes(String(u.username).toLowerCase());
+        return `
         <tr>
           <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${u.username}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${u.name}</td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-            <select class="rounded-md border-gray-300 shadow-sm">
+            <select class="rounded-md border-gray-300 shadow-sm" ${isProtected ? 'disabled' : ''}>
               <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option>
               <option value="atendente" ${u.role === 'atendente' ? 'selected' : ''}>Atendente</option>
             </select>
           </td>
           <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-            <button class="text-blue-600 hover:text-blue-900">Salvar</button>
+            ${isProtected ? '<span class="text-xs text-gray-500">Fixado</span>' : `<button class="text-blue-600 hover:text-blue-900 btn-save-role" data-user-id="${u.id}">Salvar</button>`}
           </td>
-        </tr>`).join('');
+        </tr>`;
+      }).join('');
+
+      // Bind salvar
+      usersTbody.querySelectorAll('.btn-save-role').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = Number(btn.getAttribute('data-user-id'));
+          const row = btn.closest('tr');
+          const select = row ? row.querySelector('select') : null;
+          const role = select ? select.value : null;
+          if (!id || !role) { toast.warning('Seleção inválida'); return; }
+          try {
+            const resp = await fetch(`/api/usuarios/${id}/role`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role }) });
+            if (!resp.ok) throw new Error('Falha ao salvar');
+            toast.success('Nível de acesso atualizado!');
+          } catch (e) {
+            toast.error(e.message || 'Erro ao salvar');
+          }
+        });
+      });
     });
   }
 

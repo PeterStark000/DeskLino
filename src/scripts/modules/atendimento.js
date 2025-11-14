@@ -6,6 +6,7 @@ export function initAtendimento() {
 
   const knownBtn = document.getElementById('sim-known-customer');
   const newBtn = document.getElementById('sim-new-customer');
+  const existingBtn = document.getElementById('sim-existing-number');
   const endCallButtons = document.querySelectorAll('.btn-end-call');
   const adminToggleButton = document.getElementById('admin-toggle-button');
   const adminClientesBtn = document.getElementById('btn-admin-clientes');
@@ -26,6 +27,117 @@ export function initAtendimento() {
         route: '/atendimento/novo'
       });
     });
+  }
+
+  // Botão: Simular atendimento com número já existente
+  if (existingBtn) {
+    const dialog = /** @type {HTMLDialogElement|null} */ (document.getElementById('existing-call-modal'));
+    const searchInput = document.getElementById('existing-call-search');
+    const resultsBox = document.getElementById('existing-call-results');
+    const btnCancel = document.getElementById('existing-call-cancel');
+    const btnNew = document.getElementById('existing-call-new');
+    const btnKnown = document.getElementById('existing-call-known');
+    let debounceTimer = null;
+    let selectedPhone = '';
+
+    function renderResults(customers) {
+      if (!resultsBox) return;
+      if (!customers || customers.length === 0) {
+        resultsBox.innerHTML = '<div class="p-3 text-sm text-gray-500">Nenhum resultado</div>';
+        resultsBox.classList.remove('hidden');
+        return;
+      }
+      resultsBox.innerHTML = customers.map(c => {
+        const phonesLine = c.phones || c.phone || '-';
+        const primaryPhone = c.phone || (c.phones ? (String(c.phones).split(',')[0] || '').trim() : '');
+        const emailPart = c.email ? ` - ${c.email}` : '';
+        return `
+          <button class="w-full text-left px-4 py-3 hover:bg-gray-50 border-b last:border-b-0 result-item" data-phone="${primaryPhone}" data-client-id="${c.id}">
+            <div class="font-medium text-sm text-gray-900">${c.name} <span class="text-xs text-gray-500">(#${c.id})</span></div>
+            <div class="text-xs text-gray-500">${phonesLine}${emailPart}</div>
+          </button>`;
+      }).join('');
+
+      resultsBox.querySelectorAll('.result-item').forEach(btn => {
+        btn.addEventListener('click', () => {
+          // Marca seleção visual
+          resultsBox.querySelectorAll('.result-item').forEach(b => b.classList.remove('bg-blue-50'));
+          btn.classList.add('bg-blue-50');
+          selectedPhone = btn.getAttribute('data-phone') || '';
+          if (searchInput && selectedPhone) searchInput.value = selectedPhone;
+        });
+      });
+
+      resultsBox.classList.remove('hidden');
+    }
+
+    async function performSearch(term) {
+      try {
+        const resp = await fetch(`/api/clientes/search?q=${encodeURIComponent(term)}`);
+        if (!resp.ok) throw new Error('Erro ao buscar');
+        const { customers } = await resp.json();
+        const map = new Map();
+        for (const c of customers || []) {
+          if (!map.has(c.id)) map.set(c.id, c);
+        }
+        renderResults(Array.from(map.values()));
+      } catch (e) {
+        if (resultsBox) {
+          resultsBox.innerHTML = `<div class="p-3 text-sm text-red-600">Erro ao buscar: ${e.message}</div>`;
+          resultsBox.classList.remove('hidden');
+        }
+      }
+    }
+
+    existingBtn.addEventListener('click', () => {
+      selectedPhone = '';
+      if (resultsBox) { resultsBox.innerHTML = ''; resultsBox.classList.add('hidden'); }
+      if (searchInput) searchInput.value = '';
+      if (dialog) try { dialog.showModal(); } catch {}
+    });
+
+    if (searchInput) {
+      searchInput.addEventListener('input', () => {
+        const term = searchInput.value.trim();
+        selectedPhone = '';
+        if (debounceTimer) clearTimeout(debounceTimer);
+        if (term.length < 2) {
+          if (resultsBox) resultsBox.classList.add('hidden');
+          return;
+        }
+        debounceTimer = setTimeout(() => performSearch(term), 300);
+      });
+    }
+
+    if (btnCancel && dialog) {
+      btnCancel.addEventListener('click', () => {
+        dialog.close();
+        toast.info('Operação cancelada.');
+      });
+    }
+
+    async function proceed(route) {
+      const entered = (searchInput?.value || '').trim();
+      const phone = selectedPhone || entered;
+      if (!phone) { toast.warning('Digite ou selecione um número.'); return; }
+      try {
+        const response = await fetch(`/api/clientes/${encodeURIComponent(phone)}`);
+        const clientExists = response.ok;
+        const isKnown = route.includes('identificado');
+        const isNew = route.includes('novo');
+        if (isKnown && !clientExists) { toast.warning('Cliente não encontrado para este número.'); return; }
+        if (isNew && clientExists) { toast.warning('Este número já está cadastrado. Use Cliente Identificado.'); return; }
+        localStorage.setItem('currentCallPhone', phone);
+        dialog?.close();
+        window.location.href = route;
+      } catch (error) {
+        console.error('Erro ao validar telefone (modal existente):', error);
+        toast.error('Erro ao validar telefone.');
+      }
+    }
+
+    if (btnNew) btnNew.addEventListener('click', () => proceed('/atendimento/novo'));
+    if (btnKnown) btnKnown.addEventListener('click', () => proceed('/atendimento/identificado'));
   }
 
   if (endCallButtons && endCallButtons.length) {
