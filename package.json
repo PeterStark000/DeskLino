@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "nodemon index.js",
     "build:css": "tailwindcss -i ./src/assets/input.css -o ./src/assets/styles.css --minify",
+    "dev:css": "tailwindcss -i ./src/assets/input.css -o ./src/assets/styles.css --watch",
     "postinstall": "npm run build:css",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

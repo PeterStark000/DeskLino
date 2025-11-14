@@ -11,6 +11,7 @@ const UserController = require('./src/controllers/userController');
 const LogController = require('./src/controllers/logController');
 const ClientController = require('./src/controllers/clientController');
 const ProductController = require('./src/controllers/productController');
+const PhoneController = require('./src/controllers/phoneController');
 const OrderController = require('./src/controllers/orderController');
 
 // Middlewares
@@ -36,7 +37,9 @@ const pages = [
   { path: '/atendimento/identificado', file: 'atendimento_identificado.html', title: 'Atendimento - Identificado' },
   { path: '/atendimento/novo', file: 'atendimento_novo.html', title: 'Atendimento - Novo Cliente' },
   { path: '/admin/usuarios', file: 'admin_usuarios.html', title: 'Admin - Usuários' },
-  { path: '/admin/logs', file: 'admin_logs.html', title: 'Admin - Logs' }
+  { path: '/admin/logs', file: 'admin_logs.html', title: 'Admin - Logs' },
+  { path: '/admin/clientes', file: 'admin_clientes.html', title: 'Admin - Clientes' },
+  { path: '/admin/telefones', file: 'admin_telefones.html', title: 'Admin - Telefones' }
 ];
 
 pages.forEach(({ path, redirect, file, title }) => {
@@ -50,11 +53,33 @@ pages.forEach(({ path, redirect, file, title }) => {
 // ===== ROTAS API (usando Controllers com padrão DAO) =====
 app.post('/api/login', AuthController.login);
 app.get('/api/usuarios', UserController.getAll);
+app.put('/api/usuarios/:id/role', UserController.updateRole);
 app.get('/api/logs', LogController.getAll);
+app.get('/api/clientes/search', ClientController.search);
+app.get('/api/clientes', ClientController.list);
+app.get('/api/clientes/id/:id', ClientController.getById);
 app.get('/api/clientes/:telefone', ClientController.getByPhone);
 app.post('/api/clientes', ClientController.create);
+app.put('/api/clientes/:id', ClientController.update);
+app.delete('/api/clientes/:id', ClientController.remove);
+// Telefones
+app.get('/api/clientes/:id/telefones', ClientController.listPhones);
+app.post('/api/clientes/:id/telefones', ClientController.addPhone);
+// Endereços
+app.get('/api/clientes/:id/enderecos', ClientController.listAddresses);
+app.post('/api/clientes/:id/enderecos', ClientController.addAddress);
+app.put('/api/clientes/:id/enderecos/:enderecoId/principal', ClientController.setPrimaryAddress);
+app.delete('/api/clientes/:id/enderecos/:enderecoId', ClientController.deleteAddress);
+app.get('/api/clientes/:id/pedidos', ClientController.getOrderHistory);
 app.get('/api/produtos', ProductController.getAll);
 app.post('/api/pedidos', OrderController.create);
+app.get('/api/atendimentos/:id/pedido', OrderController.getByAtendimento);
+
+// Telefones (admin)
+app.get('/api/telefones', PhoneController.list);
+app.post('/api/telefones', PhoneController.create);
+app.put('/api/telefones/:id', PhoneController.update);
+app.delete('/api/telefones/:id', PhoneController.remove);
 
 // Start server e testa conexão DB
 app.listen(port, async () => {

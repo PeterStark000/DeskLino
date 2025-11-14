@@ -33,3 +33,11 @@ body { font-family: 'Inter', sans-serif; }
   background-color: rgba(100,116,139,0.4); /* slate-500 */
   border-radius: 9999px;
 }
+
+/* Placeholders mais claros para diferenciar do texto digitado */
+@layer base {
+  input::placeholder,
+  textarea::placeholder {
+    @apply text-gray-400;
+  }
+}
