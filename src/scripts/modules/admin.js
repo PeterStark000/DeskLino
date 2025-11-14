@@ -25,7 +25,7 @@ export function initAdmin() {
     // Redireciona atendente para clientes se estiver em outra aba
     if (role !== 'admin') {
       const path = window.location.pathname;
-      if (path.startsWith('/admin') && !(path.includes('/admin/clientes') || path.includes('/admin/telefones'))) {
+      if (path.startsWith('/admin') && !(path.includes('/admin/clientes') || path.includes('/admin/telefones') || path.includes('/admin/pedidos'))) {
         window.location.href = '/admin/clientes';
       }
     }
@@ -154,7 +154,7 @@ export function initAdmin() {
       }
       // Para atendente: bloquear abas que não são clientes
       const isAdmin = role === 'admin';
-      if (!isAdmin && href !== '/admin/clientes' && href !== '/admin/telefones') {
+      if (!isAdmin && href !== '/admin/clientes' && href !== '/admin/telefones' && href !== '/admin/pedidos') {
         e.preventDefault();
         return;
       }

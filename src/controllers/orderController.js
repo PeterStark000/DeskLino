@@ -37,6 +37,36 @@ class OrderController {
       res.status(500).json({ error: 'Erro ao buscar pedido do atendimento' });
     }
   }
+
+  static async list(req, res) {
+    try {
+      const { page = 1, pageSize = 20, search = '', clientId = '', status = '' } = req.query || {};
+      const data = await DAO.listOrders({
+        page: Number(page) || 1,
+        pageSize: Number(pageSize) || 20,
+        search: String(search || ''),
+        clientId: clientId ? Number(clientId) : null,
+        status: String(status || '')
+      });
+      res.json(data);
+    } catch (error) {
+      console.error('[OrderController.list]', error);
+      res.status(500).json({ error: 'Erro ao listar pedidos' });
+    }
+  }
+
+  static async updateStatus(req, res) {
+    try {
+      const id = Number(req.params.id);
+      const { status } = req.body || {};
+      if (!id || !status) return res.status(400).json({ error: 'ID e status são obrigatórios' });
+      await DAO.updateOrderStatus(id, status);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('[OrderController.updateStatus]', error);
+      res.status(500).json({ error: 'Erro ao atualizar status do pedido' });
+    }
+  }
 }
 
 module.exports = OrderController;

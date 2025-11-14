@@ -39,7 +39,8 @@ const pages = [
   { path: '/admin/usuarios', file: 'admin_usuarios.html', title: 'Admin - Usuários' },
   { path: '/admin/logs', file: 'admin_logs.html', title: 'Admin - Logs' },
   { path: '/admin/clientes', file: 'admin_clientes.html', title: 'Admin - Clientes' },
-  { path: '/admin/telefones', file: 'admin_telefones.html', title: 'Admin - Telefones' }
+  { path: '/admin/telefones', file: 'admin_telefones.html', title: 'Admin - Telefones' },
+  { path: '/admin/pedidos', file: 'admin_pedidos.html', title: 'Admin - Pedidos' }
 ];
 
 pages.forEach(({ path, redirect, file, title }) => {
@@ -74,6 +75,9 @@ app.get('/api/clientes/:id/pedidos', ClientController.getOrderHistory);
 app.get('/api/produtos', ProductController.getAll);
 app.post('/api/pedidos', OrderController.create);
 app.get('/api/atendimentos/:id/pedido', OrderController.getByAtendimento);
+// Pedidos (admin)
+app.get('/api/pedidos', OrderController.list);
+app.put('/api/pedidos/:id/status', OrderController.updateStatus);
 
 // Telefones (admin)
 app.get('/api/telefones', PhoneController.list);

@@ -665,6 +665,56 @@ async function getOrderByAtendimento(atendimentoId) {
   return order;
 }
 
+// =========================
+// Pedidos - Admin (listar/atualizar status)
+// =========================
+async function listOrders({ page = 1, pageSize = 20, search = '', clientId = null, status = '' }) {
+  const offset = (page - 1) * pageSize;
+  const filters = [];
+  const params = [];
+  if (clientId) { filters.push('c.cod_cliente = ?'); params.push(clientId); }
+  if (status) { filters.push('p.status = ?'); params.push(status); }
+  if (search) {
+    filters.push('(c.nome LIKE ? OR EXISTS (SELECT 1 FROM Telefone t WHERE t.cod_cliente = c.cod_cliente AND t.numero LIKE ?))');
+    const term = `%${search}%`;
+    params.push(term, term);
+  }
+  const where = filters.length ? `WHERE ${filters.join(' AND ')}` : '';
+
+  const sql = `
+    SELECT 
+      p.cod_pedido as id,
+      p.data_pedido as created_at,
+      p.status,
+      p.forma_pag as payment_method,
+      c.cod_cliente as client_id,
+      c.nome as client_name,
+      (SELECT t.numero FROM Telefone t WHERE t.cod_cliente = c.cod_cliente ORDER BY t.cod_telefone LIMIT 1) as phone
+    FROM Pedido p
+    INNER JOIN Atendimento a ON p.cod_atendimento = a.cod_atendimento
+    INNER JOIN Cliente c ON a.cod_cliente = c.cod_cliente
+    ${where}
+    ORDER BY p.cod_pedido DESC
+    LIMIT ? OFFSET ?`;
+  const rows = await query(sql, [...params, pageSize, offset]);
+
+  const countSql = `
+    SELECT COUNT(*) as total
+    FROM Pedido p
+    INNER JOIN Atendimento a ON p.cod_atendimento = a.cod_atendimento
+    INNER JOIN Cliente c ON a.cod_cliente = c.cod_cliente
+    ${where}`;
+  const totalRows = await query(countSql, params);
+  const total = totalRows[0]?.total || 0;
+  return { page, pageSize, total, rows };
+}
+
+async function updateOrderStatus(orderId, status) {
+  const sql = 'UPDATE Pedido SET status = ? WHERE cod_pedido = ?';
+  await query(sql, [status, orderId]);
+  return { success: true };
+}
+
 /**
  * Lista logs de atendimento (últimos 50)
  * Tabela: Atendimento com telefone do cliente
@@ -745,6 +795,8 @@ module.exports = {
   // Pedidos
   getClientOrderHistory,
   createOrder,
+  listOrders,
+  updateOrderStatus,
   // Logs
   getAllLogs,
   createLog,
