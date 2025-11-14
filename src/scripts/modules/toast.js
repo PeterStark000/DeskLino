@@ -127,13 +127,89 @@ function dismissToast(toastId) {
 }
 
 /**
+ * Exibe um toast de confirmação interativo
+ * @param {string} title - Título do toast
+ * @param {string} message - Mensagem descritiva
+ * @param {object} options - Opções { confirmText, cancelText }
+ * @returns {Promise<boolean>} - Resolve com true se confirmado, false se cancelado
+ */
+export function showConfirmToast(title, message, options = {}) {
+  return new Promise((resolve) => {
+    const container = getToastContainer();
+    if (!container) {
+      console.error('Toast container não encontrado no DOM');
+      resolve(false);
+      return;
+    }
+
+    const toastId = `toast-confirm-${toastIdCounter++}`;
+    const confirmText = options.confirmText || 'Confirmar';
+    const cancelText = options.cancelText || 'Cancelar';
+
+    // Criar elemento toast de confirmação
+    const toast = document.createElement('div');
+    toast.id = toastId;
+    toast.className = 'w-full space-y-4 max-w-xs p-3 text-gray-800 bg-white rounded-lg shadow-xl border border-gray-200 transition-all duration-300 ease-in-out opacity-0 transform translate-x-full mb-4';
+    toast.setAttribute('role', 'alert');
+    
+    toast.innerHTML = `
+      <div class="flex">
+        <div class="inline-flex items-center justify-center shrink-0 w-9 h-9 text-orange-600 bg-orange-100 rounded-lg">
+          <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 13V8m0 8h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+          </svg>
+          <span class="sr-only">Atenção</span>
+        </div>
+        <div class="ms-3 text-sm font-normal w-full">
+          <span class="mb-1 text-base font-semibold text-gray-900 block">${title}</span>
+          <div class="mb-3 text-gray-600">${message}</div> 
+          <div class="grid grid-cols-2 gap-3">
+            <button type="button" data-action="cancel" class="w-full text-gray-700 bg-white box-border border border-gray-300 hover:bg-gray-50 hover:text-gray-900 focus:ring-4 focus:ring-gray-200 shadow-sm font-medium leading-5 rounded-lg text-xs px-3 py-1.5 focus:outline-none">
+              ${cancelText}
+            </button>
+            <button type="button" data-action="confirm" class="w-full inline-flex items-center justify-center text-white bg-red-600 hover:bg-red-700 box-border border border-transparent focus:ring-4 focus:ring-red-300 shadow-sm font-medium leading-5 rounded-lg text-xs px-3 py-1.5 focus:outline-none">
+              ${confirmText}
+            </button> 
+          </div>    
+        </div>
+      </div>
+    `;
+
+    // Permitir interação mesmo com pointer-events desabilitado no container
+    toast.style.pointerEvents = 'auto';
+    container.appendChild(toast);
+
+    // Animar entrada (slide in from right)
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        toast.classList.remove('opacity-0', 'translate-x-full');
+        toast.classList.add('opacity-100', 'translate-x-0');
+      });
+    });
+
+    // Handler de botões
+    const confirmBtn = toast.querySelector('button[data-action="confirm"]');
+    const cancelBtn = toast.querySelector('button[data-action="cancel"]');
+
+    const handleResponse = (confirmed) => {
+      dismissToast(toastId);
+      resolve(confirmed);
+    };
+
+    confirmBtn.addEventListener('click', () => handleResponse(true));
+    cancelBtn.addEventListener('click', () => handleResponse(false));
+  });
+}
+
+/**
  * Atalhos para tipos específicos
  */
 export const toast = {
   success: (msg, duration) => showToast(msg, 'success', duration),
   error: (msg, duration) => showToast(msg, 'error', duration),
   warning: (msg, duration) => showToast(msg, 'warning', duration),
-  info: (msg, duration) => showToast(msg, 'info', duration)
+  info: (msg, duration) => showToast(msg, 'info', duration),
+  confirm: (title, message, options) => showConfirmToast(title, message, options)
 };
 
 /** Persistir toast para aparecer após redirecionamento **/

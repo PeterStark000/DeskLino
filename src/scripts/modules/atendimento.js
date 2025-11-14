@@ -746,9 +746,12 @@ async function loadClientAddresses(clientId) {
           toast.warning('Selecione um endereço primeiro');
           return;
         }
-        if (!confirm('Tem certeza que deseja apagar este endereço?')) {
-          return;
-        }
+        const confirmed = await toast.confirm(
+          'Apagar endereço',
+          'Tem certeza que deseja remover este endereço? Esta ação não pode ser desfeita.',
+          { confirmText: 'Apagar', cancelText: 'Cancelar' }
+        );
+        if (!confirmed) return;
         try {
           const response = await fetch(`/api/clientes/${clientId}/enderecos/${selectedId}`, {
             method: 'DELETE'
