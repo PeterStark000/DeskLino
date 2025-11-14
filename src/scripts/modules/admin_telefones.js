@@ -36,7 +36,12 @@ function renderPhones({ rows, page, pageSize, total }) {
       const action = btn.dataset.action;
       const id = Number(btn.dataset.id);
       if (action === 'delete') {
-        if (!confirm('Apagar este telefone?')) return;
+        const confirmed = await toast.confirm(
+          'Apagar telefone',
+          'Tem certeza que deseja remover este telefone? Esta ação não pode ser desfeita.',
+          { confirmText: 'Apagar', cancelText: 'Cancelar' }
+        );
+        if (!confirmed) return;
         const resp = await fetch(`/api/telefones/${id}`, { method: 'DELETE' });
         if (!resp.ok) { toast.error('Falha ao apagar'); return; }
         toast.success('Telefone apagado!');

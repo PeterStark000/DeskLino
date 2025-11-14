@@ -72,7 +72,12 @@ async function handleRowAction(action, id) {
     const { customer } = await resp.json();
     openEditDialog(customer);
   } else if (action === 'delete') {
-    if (!confirm('Tem certeza que deseja apagar este cliente?')) return;
+    const confirmed = await toast.confirm(
+      'Apagar cliente',
+      'Tem certeza que deseja remover este cliente? Todos os dados associados serão perdidos.',
+      { confirmText: 'Apagar', cancelText: 'Cancelar' }
+    );
+    if (!confirmed) return;
     const resp = await fetch(`/api/clientes/${id}`, { method: 'DELETE' });
     if (!resp.ok) {
       const err = await resp.json().catch(()=>({}));
@@ -119,13 +124,19 @@ async function loadAddresses(clientId) {
           await fetch(`/api/clientes/${clientId}/enderecos/${addrId}/principal`, { method: 'PUT' });
           await loadAddresses(clientId);
         } else if (action === 'addr-del') {
-          if (!confirm('Apagar este endereço?')) return;
+          const confirmed = await toast.confirm(
+            'Apagar endereço',
+            'Tem certeza que deseja remover este endereço? Esta ação não pode ser desfeita.',
+            { confirmText: 'Apagar', cancelText: 'Cancelar' }
+          );
+          if (!confirmed) return;
           const resp = await fetch(`/api/clientes/${clientId}/enderecos/${addrId}`, { method: 'DELETE' });
           if (!resp.ok) {
             const err = await resp.json().catch(()=>({}));
             toast.error(err.error || 'Falha ao apagar endereço');
             return;
           }
+          toast.success('Endereço removido com sucesso!');
           await loadAddresses(clientId);
         } else if (action === 'addr-edit') {
           // Pré-preenche o formulário e ao salvar: add + delete antigo
