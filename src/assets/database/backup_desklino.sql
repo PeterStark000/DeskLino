@@ -142,20 +142,42 @@ CREATE TABLE produto (
   nome VARCHAR(100) NOT NULL,
   descricao TEXT,
   valor DECIMAL(6,2) NOT NULL,
+  qtde_estoque SMALLINT NOT NULL DEFAULT 0,
+  disponivel CHAR(1) NOT NULL DEFAULT 'S',
   PRIMARY KEY (cod_produto)
 );
 
-INSERT INTO produto VALUES
-(1,'Botijão P13','Botijão de gás GLP 13kg',105.00),
-(2,'Botijão P20','Botijão de gás GLP 20kg',150.00),
-(3,'Botijão P45','Botijão de gás GLP 45kg industrial',320.00),
-(4,'Água Mineral 20L','Galão de água mineral 20 litros',18.00),
-(5,'Água com Gás 20L','Galão de água com gás 20 litros',22.00),
-(6,'Suporte para Botijão','Suporte metálico para botijão de gás',45.00),
-(7,'Mangueira de Gás 1m','Mangueira para instalação de gás 1 metro',15.00),
-(8,'Mangueira de Gás 2m','Mangueira para instalação de gás 2 metros',25.00),
-(9,'Regulador de Gás','Regulador de pressão para botijão',35.00),
-(10,'Abraçadeira Metálica','Abraçadeira para fixação de mangueira',5.00);
+INSERT INTO produto (cod_produto, nome, descricao, valor, qtde_estoque) VALUES
+(1, 'GLP Cilindro P20', 'Cilindro de GLP modelo P20 para uso residencial e comercial.', 293.00, 293),
+(2, 'GLP Botijão P13', 'Botijão de GLP modelo P13, padrão residencial.', 120.00, 3000),
+(3, 'GLP Cilindro P45', 'Cilindro de GLP modelo P45, uso industrial.', 460.00, 350),
+(4, 'Botijão Vazio P20', 'Botijão vazio modelo P20 para troca.', 0.00, 127),
+(5, 'Botijão Vazio P13', 'Botijão vazio modelo P13 para reposição ou troca.', 200.00, 3000),
+(6, 'Água Galão 10L', 'Galão de água mineral Igarapé com 10 litros.', 12.00, 1500),
+(7, 'Água Galão 20L', 'Galão de água mineral Igarapé com 20 litros.', 19.00, 2000),
+(8, 'Água 510mL Sem Gás', 'Água mineral Igarapé 510 mL sem gás.', 6.55, 294),
+(9, 'Botijão Vazio P45', 'Botijão vazio modelo P45 industrial.', 0.00, 87),
+(10, 'Água PET 1,5L C/6', 'Pacote com 6 garrafas de água 1,5L Igarapé sem gás.', 16.00, 0),
+(11, 'Água PET 500mL C/12 Gás', 'Pacote com 12 unidades de água Igarapé 500mL com gás.', 22.00, 58),
+(12, 'Água PET 5L C/2', 'Pacote com 2 garrafas de água Igarapé 5 litros.', 16.00, 0),
+(13, 'Água PET 500mL C/12', 'Pacote com 12 unidades de água 500mL Água Azul sem gás.', 14.00, 200),
+(14, 'Copo Descartável 48un', 'Caixa com 48 copos descartáveis.', 38.00, 0),
+(15, 'Galão Vazio 20L', 'Vasilhame vazio de 20 litros para troca.', 11.00, 100),
+(16, 'Água Copo 200mL C/48', 'Fardo com 48 copos de água 200mL Igarapé.', 40.00, 2),
+(17, 'Regulador de Gás NS05C10', 'Regulador de gás sem manômetro, modelo NS05C10, 1kg.', 50.00, 40),
+(18, 'Regulador de Gás ALIAS04C10', 'Regulador de gás sem manômetro, modelo ALIAS04C10, 1kg.', 50.00, 20),
+(19, 'Mangueira 3/8"', 'Mangueira transparente 3/8" tarja azul.', 10.00, 1),
+(20, 'Abraçadeira 13–19mm', 'Abraçadeira RSF 13–19mm para mangueira de gás.', 2.50, 10),
+(21, 'Água 500mL Tropical', 'Garrafa de água 500mL marca Tropical.', 14.00, 5),
+(22, 'Água 500mL Pura da Serra', 'Água mineral 500mL sem gás marca Pura da Serra.', 14.00, 0),
+(23, 'Água 1,5L Tropical', 'Garrafa de água 1,5L marca Tropical.', 14.00, 0),
+(24, 'Água 1,5L Pura da Serra', 'Garrafa de água 1,5L da marca Pura da Serra.', 14.00, 0),
+(25, 'Água 1,5L Com Gás', 'Garrafa de água 1,5L Igarapé com gás.', 22.00, 0),
+(26, 'Água PET 500mL C/6', 'Pacote com 6 unidades de água 500mL Igarapé sem gás.', 16.00, 80),
+(27, 'Garrafão PP', 'Vasilhame de garrafão tipo PP para água.', 20.00, 1541),
+(28, 'Água 1,5L Água Azul', 'Garrafa de água 1,5L marca Água Azul.', 14.00, 0),
+(29, 'Água Igarapé 10L', 'Água mineral Igarapé em garrafa PET de 10 litros.', 16.00, 10);
+
 
 -- ==========================
 -- TABELA: pedido
@@ -166,6 +188,7 @@ CREATE TABLE pedido (
   data_pedido TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   status VARCHAR(30) NOT NULL,
   forma_pag VARCHAR(30) NOT NULL,
+  valor_total DECIMAL(8,2) NOT NULL,
   observacao TEXT,
   cod_atendimento INT NOT NULL,
   cod_endereco MEDIUMINT NOT NULL,
@@ -176,18 +199,18 @@ CREATE TABLE pedido (
     ON UPDATE CASCADE
 );
 
-INSERT INTO pedido VALUES
-(1,'2025-11-13 19:48:55','Pendente','Dinheiro',NULL,1,1),
-(2,'2025-11-13 20:17:44','Pendente','Dinheiro',NULL,2,1),
-(3,'2025-11-13 20:23:01','Pendente','Dinheiro','O cliente gosta de atender os entregadores de calcinha, favor dar uma comida.',3,21),
-(4,'2025-11-13 21:18:40','Pendente','Dinheiro',NULL,4,1),
-(5,'2025-11-13 21:19:46','Pendente','Dinheiro',NULL,5,1),
-(6,'2025-11-13 21:21:19','Pendente','Dinheiro','Teste',6,1),
-(7,'2025-11-13 21:41:01','Pendente','Dinheiro',NULL,7,22),
-(8,'2025-11-13 22:11:49','Pendente','Dinheiro',NULL,8,22),
-(9,'2025-11-13 23:21:05','Pendente','Dinheiro','Pitbul bravo',9,25),
-(10,'2025-11-13 23:56:39','Pendente','Dinheiro',NULL,10,1),
-(11,'2025-11-14 00:07:06','Entregue','Dinheiro','Prefere troco para 100 reais.',11,26);
+INSERT INTO pedido (cod_pedido, data_pedido, status, forma_pag, valor_total, observacao, cod_atendimento, cod_endereco) VALUES
+(1,'2025-11-13 19:48:55','Pendente','Dinheiro',1415.00,NULL,1,1),
+(2,'2025-11-13 20:17:44','Pendente','Dinheiro',413.00,NULL,2,1),
+(3,'2025-11-13 20:23:01','Pendente','Dinheiro',16.00,NULL,3,21),
+(4,'2025-11-13 21:18:40','Pendente','Dinheiro',895.00,NULL,4,1),
+(5,'2025-11-13 21:19:46','Pendente','Dinheiro',0.00,NULL,5,1),
+(6,'2025-11-13 21:21:19','Pendente','Dinheiro',48.00,'Teste',6,1),
+(7,'2025-11-13 21:41:01','Pendente','Dinheiro',293.00,NULL,7,22),
+(8,'2025-11-13 22:11:49','Pendente','Dinheiro',36.00,NULL,8,22),
+(9,'2025-11-13 23:21:05','Pendente','Dinheiro',600.00,'Pitbul bravo',9,25),
+(10,'2025-11-13 23:56:39','Pendente','Dinheiro',48.00,NULL,10,1),
+(11,'2025-11-14 00:07:06','Entregue','Dinheiro',460.00,'Prefere troco para 100 reais.',11,26);
 
 -- ==========================
 -- TABELA: item_pedido

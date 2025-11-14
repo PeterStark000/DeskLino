@@ -166,6 +166,19 @@ class ClientController {
     }
   }
 
+  static async updateAddress(req, res) {
+    try {
+      const clientId = parseInt(req.params.id, 10);
+      const enderecoId = parseInt(req.params.enderecoId, 10);
+      const addressData = req.body;
+      await DAO.updateAddress(clientId, enderecoId, addressData);
+      res.json({ success: true });
+    } catch (e) {
+      console.error('[ClientController.updateAddress]', e);
+      res.status(500).json({ error: e.message || 'Erro ao atualizar endereço' });
+    }
+  }
+
   static async setPrimaryAddress(req, res) {
     try {
       const clientId = parseInt(req.params.id, 10);

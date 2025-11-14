@@ -244,9 +244,22 @@ export function initAtendimento() {
     btnRegisterOrderKnown.addEventListener('click', async () => {
       const selectedProducts = getSelectedProducts('known');
       if (selectedProducts.length === 0) {
-        alert('Selecione pelo menos um produto.');
+        toast.warning('Selecione pelo menos um produto.');
         return;
       }
+
+      // Validar estoque
+      const knownContainer = document.getElementById('products-list-known');
+      let stockError = false;
+      selectedProducts.forEach(item => {
+        const cb = knownContainer?.querySelector(`.product-checkbox[value="${CSS.escape(item.product)}"]`);
+        const stock = cb ? Number(cb.getAttribute('data-stock') || 0) : 0;
+        if (item.quantity > stock) {
+          toast.error(`${item.product}: quantidade solicitada (${item.quantity}) excede estoque disponível (${stock}).`);
+          stockError = true;
+        }
+      });
+      if (stockError) return;
 
       const callNotes = document.getElementById('call-notes-known')?.value || '';
       const phone = document.getElementById('known-phone')?.textContent;
@@ -263,15 +276,23 @@ export function initAtendimento() {
         }
         const { customer } = await clientResp.json();
 
-        // 2) Obter usuário logado
+        // 2) Calcular valor total
+        let valorTotal = 0;
+        selectedProducts.forEach(item => {
+          const cb = knownContainer?.querySelector(`.product-checkbox[value="${CSS.escape(item.product)}"]`);
+          const price = cb ? Number(cb.getAttribute('data-price') || 0) : 0;
+          valorTotal += price * item.quantity;
+        });
+
+        // 3) Obter usuário logado
         const rawUser = localStorage.getItem('user');
         const user = rawUser ? JSON.parse(rawUser) : { name: 'Desconhecido' };
 
-        // 3) Enviar pedido com endereço selecionado
+        // 4) Enviar pedido com endereço selecionado e valor_total
         const response = await fetch('/api/pedidos', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ client_id: customer.id, items: selectedProducts, notes: callNotes, user: user.name, forma_pag: paymentMethod, address_id: addressId })
+          body: JSON.stringify({ client_id: customer.id, items: selectedProducts, notes: callNotes, user: user.name, forma_pag: paymentMethod, address_id: addressId, valor_total: valorTotal })
         });
 
         if (!response.ok) {
@@ -279,9 +300,9 @@ export function initAtendimento() {
           throw new Error(err.error || 'Erro ao registrar pedido');
         }
 
-  // Persistir toast para após redirecionar
-  setPendingToast('success', 'Pedido registrado com sucesso!');
-  window.location.href = '/atendimento/idle';
+        // Persistir toast para após redirecionar
+        setPendingToast('success', 'Pedido registrado com sucesso!');
+        window.location.href = '/atendimento/idle';
       } catch (e) {
         console.error('Falha ao registrar pedido (identificado):', e);
         toast.error(e.message);
@@ -437,11 +458,32 @@ async function saveNewClientAndOrder(selectedProducts, createOrder) {
 
         // Se também deve criar pedido
         if (createOrder && selectedProducts.length > 0) {
+          // Validar estoque
+          const newContainer = document.getElementById('products-list-new');
+          let stockError = false;
+          selectedProducts.forEach(item => {
+            const cb = newContainer?.querySelector(`.product-checkbox[value="${CSS.escape(item.product)}"]`);
+            const stock = cb ? Number(cb.getAttribute('data-stock') || 0) : 0;
+            if (item.quantity > stock) {
+              toast.error(`${item.product}: quantidade solicitada (${item.quantity}) excede estoque disponível (${stock}).`);
+              stockError = true;
+            }
+          });
+          if (stockError) return;
+
+          // Calcular valor total
+          let valorTotal = 0;
+          selectedProducts.forEach(item => {
+            const cb = newContainer?.querySelector(`.product-checkbox[value="${CSS.escape(item.product)}"]`);
+            const price = cb ? Number(cb.getAttribute('data-price') || 0) : 0;
+            valorTotal += price * item.quantity;
+          });
+
           const paymentMethod = document.getElementById('payment-method-new')?.value || 'Dinheiro';
           const orderResp = await fetch('/api/pedidos', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ client_id: linkClientId, items: selectedProducts, notes: '', forma_pag: paymentMethod })
+            body: JSON.stringify({ client_id: linkClientId, items: selectedProducts, notes: '', forma_pag: paymentMethod, valor_total: valorTotal })
           });
           if (!orderResp.ok) throw new Error('Erro ao registrar pedido');
           setPendingToast('success', 'Telefone vinculado e pedido registrado com sucesso!');
@@ -517,10 +559,31 @@ async function saveNewClientAndOrder(selectedProducts, createOrder) {
 
     // 2) Criar pedido (se solicitado)
     if (createOrder && selectedProducts.length > 0) {
+      // Validar estoque
+      const newContainer = document.getElementById('products-list-new');
+      let stockError = false;
+      selectedProducts.forEach(item => {
+        const cb = newContainer?.querySelector(`.product-checkbox[value="${CSS.escape(item.product)}"]`);
+        const stock = cb ? Number(cb.getAttribute('data-stock') || 0) : 0;
+        if (item.quantity > stock) {
+          toast.error(`${item.product}: quantidade solicitada (${item.quantity}) excede estoque disponível (${stock}).`);
+          stockError = true;
+        }
+      });
+      if (stockError) return;
+
+      // Calcular valor total
+      let valorTotal = 0;
+      selectedProducts.forEach(item => {
+        const cb = newContainer?.querySelector(`.product-checkbox[value="${CSS.escape(item.product)}"]`);
+        const price = cb ? Number(cb.getAttribute('data-price') || 0) : 0;
+        valorTotal += price * item.quantity;
+      });
+
       const orderResp = await fetch('/api/pedidos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ client_id, items: selectedProducts, notes, forma_pag: paymentMethod })
+        body: JSON.stringify({ client_id, items: selectedProducts, notes, forma_pag: paymentMethod, valor_total: valorTotal })
       });
       if (!orderResp.ok) {
         const err = await orderResp.json().catch(() => ({}));
@@ -863,16 +926,72 @@ async function loadClientOrderHistory(clientId) {
       const status = h.status || 'Desconhecido';
       const products = h.products || '-';
       return `
-        <div class="p-3 bg-gray-50 rounded-lg border">
+        <button class="p-3 bg-gray-50 rounded-lg border w-full text-left hover:bg-gray-100 transition history-order-item" data-atendimento-id="${h.atendimento_id || ''}">
           <p class="font-medium text-gray-800 text-sm">${products}</p>
           <p class="text-xs text-gray-500">${dateStr} - ${status}</p>
-        </div>
+        </button>
       `;
     }).join('');
+
+    // Clique em item do histórico aplica produtos e endereço
+    container.addEventListener('click', async (e) => {
+      const btn = e.target.closest('.history-order-item');
+      if (!btn) return;
+      const atendimentoId = Number(btn.getAttribute('data-atendimento-id'));
+      if (!atendimentoId) return;
+      try {
+        const resp = await fetch(`/api/atendimentos/${atendimentoId}/pedido`);
+        if (!resp.ok) throw new Error('Falha ao carregar pedido');
+        const { order } = await resp.json();
+        applyOrderToUI(order);
+      } catch (err) {
+        console.error('Erro ao aplicar pedido do histórico:', err);
+      }
+    });
   } catch (e) {
     console.error('Erro ao carregar histórico:', e);
     container.innerHTML = `<div class="p-3 bg-red-50 rounded-lg border text-sm text-red-600">Erro ao carregar histórico: ${e.message}</div>`;
   }
+}
+
+/**
+ * Aplica dados do pedido (itens, endereço, observações, forma de pagamento)
+ * no fluxo de cliente identificado.
+ */
+function applyOrderToUI(order) {
+  // 1) Produtos: marcar checkboxes e quantidades na lista de cliente identificado
+  const knownContainer = document.getElementById('products-list-known');
+  if (knownContainer) {
+    const allCbs = knownContainer.querySelectorAll('.product-checkbox');
+    allCbs.forEach(cb => { cb.checked = false; });
+    const allQtys = knownContainer.querySelectorAll('input[type="number"][data-product]');
+    allQtys.forEach(inp => { inp.value = '1'; });
+
+    (order.items || []).forEach(it => {
+      const name = it.product;
+      const cb = knownContainer.querySelector(`.product-checkbox[value="${CSS.escape(name)}"]`);
+      const qty = knownContainer.querySelector(`input[type="number"][data-product="${CSS.escape(name)}"]`);
+      if (cb) cb.checked = true;
+      if (qty) qty.value = String(it.quantity || 1);
+    });
+  }
+
+  // 2) Endereço: selecionar no select de endereços, se id estiver disponível
+  const addrSelect = document.getElementById('address-select-display');
+  if (addrSelect && order.address_id) {
+    const option = Array.from(addrSelect.options).find(o => Number(o.value) === Number(order.address_id));
+    if (option) {
+      addrSelect.value = String(order.address_id);
+      // Dispara change para atualizar textos (cust-address, cust-ref)
+      addrSelect.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  }
+
+  // 3) Observações e forma de pagamento, quando disponíveis na UI
+  const notesInput = document.getElementById('call-notes-known');
+  if (notesInput && typeof order.notes === 'string') notesInput.value = order.notes;
+  const paySelect = document.getElementById('payment-method-known');
+  if (paySelect && order.payment_method) paySelect.value = order.payment_method;
 }
 
 /**
@@ -892,33 +1011,96 @@ async function loadProducts() {
     // Renderizar produtos no container de cliente identificado
     const knownContainer = document.getElementById('products-list-known');
     if (knownContainer) {
-      knownContainer.innerHTML = products.map(product => `
+      knownContainer.innerHTML = products.map(product => {
+        const price = Number(product.price || 0);
+        const stock = Number(product.stock || 0);
+        const priceFormatted = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price);
+        return `
         <div class="flex items-center justify-between px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 shadow-sm transition">
-          <div class="flex items-center gap-2">
-            <input type="checkbox" value="${product.name}" class="product-checkbox w-5 h-5 flex-shrink-0 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2" />
-            <span class="flex-1 text-sm font-medium text-gray-800 min-w-0">${product.name}</span>
+          <div class="flex items-center gap-2 flex-1">
+            <input type="checkbox" value="${product.name}" class="product-checkbox w-5 h-5 flex-shrink-0 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2" data-price="${price}" data-stock="${stock}" />
+            <div class="flex-1 min-w-0">
+              <span class="text-sm font-medium text-gray-800 block">${product.name}</span>
+              <span class="text-xs text-gray-500">${priceFormatted} | Estoque: ${stock}</span>
+            </div>
           </div>
-        <input type="number" min="1" value="1" class="w-16 px-2 py-1.5 text-sm text-right border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" data-product="${product.name}" />
+          <input type="number" min="1" max="${stock}" value="1" class="w-16 px-2 py-1.5 text-sm text-right border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" data-product="${product.name}" />
         </div>
-      `).join('');
+      `;
+      }).join('');
     }
     
     // Renderizar produtos no container de novo cliente
     const newContainer = document.getElementById('products-list-new');
     if (newContainer) {
-      newContainer.innerHTML = products.map(product => `
+      newContainer.innerHTML = products.map(product => {
+        const price = Number(product.price || 0);
+        const stock = Number(product.stock || 0);
+        const priceFormatted = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price);
+        return `
         <div class="flex items-center justify-between px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 shadow-sm transition">
-          <div class="flex items-center gap-2">
-            <input type="checkbox" value="${product.name}" class="product-checkbox w-5 h-5 flex-shrink-0 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2" />
-            <span class="flex-1 text-sm font-medium text-gray-800 min-w-0">${product.name}</span>
+          <div class="flex items-center gap-2 flex-1">
+            <input type="checkbox" value="${product.name}" class="product-checkbox w-5 h-5 flex-shrink-0 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2" data-price="${price}" data-stock="${stock}" />
+            <div class="flex-1 min-w-0">
+              <span class="text-sm font-medium text-gray-800 block">${product.name}</span>
+              <span class="text-xs text-gray-500">${priceFormatted} | Estoque: ${stock}</span>
+            </div>
           </div>
-        <input type="number" min="1" value="1" class="w-16 px-2 py-1.5 text-sm text-right border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" data-product="${product.name}" />
+          <input type="number" min="1" max="${stock}" value="1" class="w-16 px-2 py-1.5 text-sm text-right border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" data-product="${product.name}" />
         </div>
-      `).join('');
+      `;
+      }).join('');
+      
+      // Adicionar listeners para atualizar total em tempo real
+      setupCartTotalListeners('new');
+    }
+    
+    // Adicionar listeners para cliente conhecido
+    if (knownContainer) {
+      setupCartTotalListeners('known');
     }
   } catch (error) {
     console.error('Erro ao carregar produtos:', error);
   }
+}
+
+/**
+ * Configura listeners para atualizar o total do carrinho em tempo real
+ * @param {string} context - 'known' ou 'new'
+ */
+function setupCartTotalListeners(context) {
+  const listId = context === 'known' ? 'products-list-known' : 'products-list-new';
+  const totalId = context === 'known' ? 'cart-total-known' : 'cart-total-new';
+  const container = document.getElementById(listId);
+  const totalElement = document.getElementById(totalId);
+  
+  if (!container || !totalElement) return;
+  
+  // Função para calcular e atualizar total
+  const updateTotal = () => {
+    let total = 0;
+    const checkboxes = container.querySelectorAll('.product-checkbox');
+    
+    checkboxes.forEach(cb => {
+      if (cb.checked) {
+        const price = Number(cb.getAttribute('data-price') || 0);
+        const productName = cb.value;
+        const qtyInput = container.querySelector(`input[data-product="${productName}"]`);
+        const quantity = qtyInput ? parseInt(qtyInput.value) || 1 : 1;
+        total += price * quantity;
+      }
+    });
+    
+    const formatted = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total);
+    totalElement.textContent = formatted;
+  };
+  
+  // Adicionar listeners nos checkboxes e inputs de quantidade
+  container.addEventListener('change', updateTotal);
+  container.addEventListener('input', updateTotal);
+  
+  // Atualizar total inicial
+  updateTotal();
 }
 
 /**

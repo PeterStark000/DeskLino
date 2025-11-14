@@ -17,7 +17,7 @@ export function initAdmin() {
       const href = a.getAttribute('href') || '';
       if (role !== 'admin') {
         // Atendente: pode ver Gerenciar Clientes e Gerenciar Telefones
-        if (href.includes('/admin/usuarios') || href.includes('/admin/logs')) {
+        if (href.includes('/admin/usuarios') || href.includes('/admin/logs') || href.includes('/admin/produtos')) {
           a.classList.add('hidden');
         }
       }

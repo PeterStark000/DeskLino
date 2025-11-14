@@ -1,7 +1,7 @@
 import { toast } from './toast.js';
 import { Utils } from './utils.js';
 
-let state = { page: 1, pageSize: 20, search: '' };
+let state = { page: 1, pageSize: 20, search: '', sortBy: 'id', sortDir: 'asc' };
 
 async function fetchPhones() {
   const params = new URLSearchParams();
@@ -16,7 +16,17 @@ async function fetchPhones() {
 function renderPhones({ rows, page, pageSize, total }) {
   const tbody = document.getElementById('admin-phones-body');
   const summary = document.getElementById('admin-phones-summary');
-  tbody.innerHTML = rows.map(r => `
+  
+  // Ordenar localmente
+  const sorted = [...rows].sort((a, b) => {
+    const aVal = a[state.sortBy];
+    const bVal = b[state.sortBy];
+    const dir = state.sortDir === 'asc' ? 1 : -1;
+    if (typeof aVal === 'number') return (aVal - bVal) * dir;
+    return String(aVal || '').localeCompare(String(bVal || '')) * dir;
+  });
+  
+  tbody.innerHTML = sorted.map(r => `
     <tr class="border-b">
       <td class="p-2">${r.id}</td>
       <td class="p-2">${r.numero}</td>
@@ -51,11 +61,6 @@ function renderPhones({ rows, page, pageSize, total }) {
       }
     });
   });
-}
-
-async function reload() {
-  const data = await fetchPhones();
-  renderPhones(data);
 }
 
 function openEditModal(phoneId, currentNumber) {
@@ -198,7 +203,40 @@ function init() {
     });
   }
 
+  setupSortHeaders();
   reload();
+}
+
+async function reload() {
+  const data = await fetchPhones();
+  renderPhones(data);
+  updateSortIndicators();
+}
+
+function updateSortIndicators() {
+  document.querySelectorAll('th[data-sort]').forEach(th => {
+    const indicator = th.querySelector('.sort-indicator');
+    if (th.dataset.sort === state.sortBy) {
+      indicator.textContent = state.sortDir === 'asc' ? ' ▲' : ' ▼';
+    } else {
+      indicator.textContent = '';
+    }
+  });
+}
+
+function setupSortHeaders() {
+  document.querySelectorAll('th[data-sort]').forEach(th => {
+    th.addEventListener('click', async () => {
+      const field = th.dataset.sort;
+      if (state.sortBy === field) {
+        state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
+      } else {
+        state.sortBy = field;
+        state.sortDir = 'asc';
+      }
+      await reload();
+    });
+  });
 }
 
 document.addEventListener('DOMContentLoaded', init);

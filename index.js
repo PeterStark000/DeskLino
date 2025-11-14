@@ -40,7 +40,8 @@ const pages = [
   { path: '/admin/logs', file: 'admin_logs.html', title: 'Admin - Logs' },
   { path: '/admin/clientes', file: 'admin_clientes.html', title: 'Admin - Clientes' },
   { path: '/admin/telefones', file: 'admin_telefones.html', title: 'Admin - Telefones' },
-  { path: '/admin/pedidos', file: 'admin_pedidos.html', title: 'Admin - Pedidos' }
+  { path: '/admin/pedidos', file: 'admin_pedidos.html', title: 'Admin - Pedidos' },
+  { path: '/admin/produtos', file: 'admin_produtos.html', title: 'Admin - Produtos' }
 ];
 
 pages.forEach(({ path, redirect, file, title }) => {
@@ -69,15 +70,22 @@ app.post('/api/clientes/:id/telefones', ClientController.addPhone);
 // Endereços
 app.get('/api/clientes/:id/enderecos', ClientController.listAddresses);
 app.post('/api/clientes/:id/enderecos', ClientController.addAddress);
+app.put('/api/clientes/:id/enderecos/:enderecoId', ClientController.updateAddress);
 app.put('/api/clientes/:id/enderecos/:enderecoId/principal', ClientController.setPrimaryAddress);
 app.delete('/api/clientes/:id/enderecos/:enderecoId', ClientController.deleteAddress);
 app.get('/api/clientes/:id/pedidos', ClientController.getOrderHistory);
+// Produtos
 app.get('/api/produtos', ProductController.getAll);
+app.get('/api/produtos/admin', ProductController.getAllAdmin);
+app.post('/api/produtos', ProductController.create);
+app.put('/api/produtos/:id', ProductController.update);
 app.post('/api/pedidos', OrderController.create);
 app.get('/api/atendimentos/:id/pedido', OrderController.getByAtendimento);
 // Pedidos (admin)
 app.get('/api/pedidos', OrderController.list);
+app.get('/api/pedidos/:id/detalhes', OrderController.getDetails);
 app.put('/api/pedidos/:id/status', OrderController.updateStatus);
+app.put('/api/pedidos/:id/corrigir-valor', OrderController.correctTotal);
 
 // Telefones (admin)
 app.get('/api/telefones', PhoneController.list);

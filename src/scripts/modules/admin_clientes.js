@@ -1,6 +1,6 @@
 import { toast } from './toast.js';
 
-let state = { page: 1, pageSize: 20, search: '' };
+let state = { page: 1, pageSize: 20, search: '', sortBy: 'id', sortDir: 'asc' };
 
 function formatDocument(digits, tipo) {
   if (tipo === 'PF') {
@@ -39,7 +39,17 @@ async function fetchClients() {
 function renderClients({ rows, page, pageSize, total }) {
   const tbody = document.getElementById('admin-clientes-body');
   const summary = document.getElementById('admin-clientes-summary');
-  tbody.innerHTML = rows.map(r => {
+  
+  // Ordenar localmente
+  const sorted = [...rows].sort((a, b) => {
+    const aVal = a[state.sortBy];
+    const bVal = b[state.sortBy];
+    const dir = state.sortDir === 'asc' ? 1 : -1;
+    if (typeof aVal === 'number') return (aVal - bVal) * dir;
+    return String(aVal || '').localeCompare(String(bVal || '')) * dir;
+  });
+  
+  tbody.innerHTML = sorted.map(r => {
     const missingDoc = (!r.cpf && !r.cnpj); // alerta se não possui documento
     const alertIcon = missingDoc ? '<span title="Documento ausente" class="inline-flex items-center mr-2 text-red-600">&#9888;</span>' : '';
     return `
@@ -139,7 +149,7 @@ async function loadAddresses(clientId) {
           toast.success('Endereço removido com sucesso!');
           await loadAddresses(clientId);
         } else if (action === 'addr-edit') {
-          // Pré-preenche o formulário e ao salvar: add + delete antigo
+          // Pré-preenche o formulário e salva com UPDATE
           const resp = await fetch(`/api/clientes/${clientId}/enderecos`);
           const data = await resp.json();
           const addresses = data.addresses || [];
@@ -151,11 +161,22 @@ async function loadAddresses(clientId) {
           saveBtn.onclick = async () => {
             const payload = readAddrForm(addr.principal === 'S');
             if (!payload) return;
-            const ok = await addAddress(clientId, payload);
-            if (ok) {
-              await fetch(`/api/clientes/${clientId}/enderecos/${addrId}`, { method: 'DELETE' });
+            try {
+              const resp = await fetch(`/api/clientes/${clientId}/enderecos/${addrId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+              });
+              if (!resp.ok) {
+                const err = await resp.json().catch(() => ({}));
+                toast.error(err.error || 'Falha ao atualizar endereço');
+                return;
+              }
+              toast.success('Endereço atualizado com sucesso!');
               toggleAddrForm(false);
               await loadAddresses(clientId);
+            } catch (e) {
+              toast.error(e.message || 'Erro ao atualizar endereço');
             }
           };
         }
@@ -309,6 +330,33 @@ function openEditDialog(customer) {
 async function reload() {
   const data = await fetchClients();
   renderClients(data);
+  updateSortIndicators();
+}
+
+function updateSortIndicators() {
+  document.querySelectorAll('th[data-sort]').forEach(th => {
+    const indicator = th.querySelector('.sort-indicator');
+    if (th.dataset.sort === state.sortBy) {
+      indicator.textContent = state.sortDir === 'asc' ? ' ▲' : ' ▼';
+    } else {
+      indicator.textContent = '';
+    }
+  });
+}
+
+function setupSortHeaders() {
+  document.querySelectorAll('th[data-sort]').forEach(th => {
+    th.addEventListener('click', async () => {
+      const field = th.dataset.sort;
+      if (state.sortBy === field) {
+        state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
+      } else {
+        state.sortBy = field;
+        state.sortDir = 'asc';
+      }
+      await reload();
+    });
+  });
 }
 
 function init() {
@@ -331,6 +379,7 @@ function init() {
   document.getElementById('admin-page-next').onclick = async () => {
     state.page += 1; await reload();
   };
+  setupSortHeaders();
   reload();
 }
 

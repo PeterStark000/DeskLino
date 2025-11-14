@@ -435,6 +435,37 @@ async function setPrimaryAddress(clientId, enderecoId) {
   }
 }
 
+async function updateAddress(clientId, enderecoId, addressData) {
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    if (ENABLE_SQL_LOG) console.log('[TX] BEGIN updateAddress');
+    
+    const { nome_end, logradouro, numero, complemento, bairro, ponto_ref, principal } = addressData;
+    
+    // Se marcar como principal, desmarcar os outros primeiro
+    if (principal === 'S') {
+      await txExecute(connection, 'UPDATE Endereco_Entrega SET principal = "N" WHERE cod_cliente = ? AND cod_endereco != ?', [clientId, enderecoId]);
+    }
+    
+    // Atualiza o endereço
+    await txExecute(connection, 
+      'UPDATE Endereco_Entrega SET nome_end = ?, logradouro = ?, numero = ?, complemento = ?, bairro = ?, ponto_ref = ?, principal = ? WHERE cod_endereco = ? AND cod_cliente = ?',
+      [nome_end, logradouro, numero, complemento || null, bairro, ponto_ref || null, principal, enderecoId, clientId]
+    );
+    
+    await connection.commit();
+    if (ENABLE_SQL_LOG) console.log('[TX] COMMIT updateAddress');
+    return { success: true };
+  } catch (error) {
+    await connection.rollback();
+    if (ENABLE_SQL_LOG) console.log('[TX] ROLLBACK updateAddress');
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
+
 async function deleteAddress(clientId, enderecoId) {
   const connection = await pool.getConnection();
   try {
@@ -445,6 +476,12 @@ async function deleteAddress(clientId, enderecoId) {
     const [result] = await txQuery(connection, 'SELECT COUNT(*) as total FROM Endereco_Entrega WHERE cod_cliente = ?', [clientId]);
     if (result[0].total <= 1) {
       throw new Error('Cliente deve ter pelo menos um endereço');
+    }
+    
+    // Verifica se está vinculado a algum pedido
+    const [pedidos] = await txQuery(connection, 'SELECT COUNT(*) as total FROM Pedido WHERE cod_endereco = ?', [enderecoId]);
+    if (pedidos[0].total > 0) {
+      throw new Error('Não é possível excluir endereço vinculado a pedidos existentes');
     }
     
     // Verifica se o endereço a ser deletado é o principal
@@ -545,6 +582,7 @@ async function getClientOrderHistory(clientId) {
   const sql = `
     SELECT 
       p.cod_pedido as id,
+      p.cod_atendimento as atendimento_id,
       p.data_pedido as created_at,
       p.status,
       p.forma_pag as payment_method,
@@ -564,10 +602,10 @@ async function getClientOrderHistory(clientId) {
 
 /**
  * Cria novo pedido com múltiplos itens
- * orderData: { client_id, items: [{ product: 'Nome', quantity: 2 }], notes, user }
+ * orderData: { client_id, items: [{ product: 'Nome', quantity: 2 }], notes, user, valor_total }
  */
 async function createOrder(orderData) {
-  const { client_id, items, notes, forma_pag = 'Dinheiro', status = 'Pendente', address_id = null } = orderData;
+  const { client_id, items, notes, forma_pag = 'Dinheiro', status = 'Pendente', address_id = null, valor_total = 0 } = orderData;
   
   const connection = await pool.getConnection();
   try {
@@ -598,27 +636,50 @@ async function createOrder(orderData) {
       cod_endereco = endereco[0].cod_endereco;
     }
     
-    // 3. Cria Pedido
+    // 3. Calcular valor total no servidor caso não tenha sido fornecido (> 0)
+    let computedTotal = 0;
+    const resolvedItems = [];
+    for (const item of items) {
+      const [produto] = await txQuery(
+        connection,
+        'SELECT cod_produto, valor FROM Produto WHERE nome LIKE ? LIMIT 1',
+        [`%${item.product}%`]
+      );
+      if (produto && produto[0]) {
+        const price = Number(produto[0].valor || 0);
+        const qty = Number(item.quantity || 0);
+        computedTotal += price * qty;
+        resolvedItems.push({ cod_produto: produto[0].cod_produto, quantity: qty });
+      }
+    }
+
+    // Se cliente informou um valor_total válido (> 0), usa-o; caso contrário usa o calculado
+    const finalTotal = Number(valor_total) > 0 ? Number(valor_total) : computedTotal;
+
+    // 4. Cria Pedido já com valor_total final
     const [maxPed] = await txQuery(connection, 'SELECT COALESCE(MAX(cod_pedido), 0) + 1 as next_id FROM Pedido');
     const cod_pedido = maxPed[0].next_id;
     if (ENABLE_SQL_LOG) console.log('[TX] -> next cod_pedido =', cod_pedido);
-    
-    await txExecute(connection,
-      'INSERT INTO Pedido (cod_pedido, status, forma_pag, observacao, cod_atendimento, cod_endereco) VALUES (?, ?, ?, ?, ?, ?)',
-      [cod_pedido, status, forma_pag, notes || null, cod_atendimento, cod_endereco]
+
+    await txExecute(
+      connection,
+      'INSERT INTO Pedido (cod_pedido, status, forma_pag, valor_total, observacao, cod_atendimento, cod_endereco) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [cod_pedido, status, forma_pag, finalTotal, notes || null, cod_atendimento, cod_endereco]
     );
-    
-    // 4. Insere Item_Pedido para cada produto
-    for (const item of items) {
-      // Busca cod_produto pelo nome
-      const [produto] = await txQuery(connection, 'SELECT cod_produto FROM Produto WHERE nome LIKE ? LIMIT 1', [`%${item.product}%`]);
-      
-      if (produto[0]) {
-        await txExecute(connection,
-          'INSERT INTO Item_Pedido (cod_pedido, cod_produto, quantidade) VALUES (?, ?, ?)',
-          [cod_pedido, produto[0].cod_produto, item.quantity]
-        );
-      }
+
+    // 5. Insere Item_Pedido e faz baixa de estoque
+    for (const it of resolvedItems) {
+      await txExecute(
+        connection,
+        'INSERT INTO Item_Pedido (cod_pedido, cod_produto, quantidade) VALUES (?, ?, ?)',
+        [cod_pedido, it.cod_produto, it.quantity]
+      );
+
+      await txExecute(
+        connection,
+        'UPDATE Produto SET qtde_estoque = CASE WHEN qtde_estoque >= ? THEN qtde_estoque - ? ELSE 0 END WHERE cod_produto = ?',
+        [it.quantity, it.quantity, it.cod_produto]
+      );
     }
     
     await connection.commit();
@@ -644,6 +705,7 @@ async function getOrderByAtendimento(atendimentoId) {
       p.status,
       p.forma_pag as payment_method,
       p.observacao as notes,
+      e.cod_endereco as address_id,
       e.logradouro, e.numero, e.complemento, e.bairro, e.ponto_ref
     FROM Pedido p
     INNER JOIN Endereco_Entrega e ON p.cod_endereco = e.cod_endereco
@@ -651,6 +713,40 @@ async function getOrderByAtendimento(atendimentoId) {
     LIMIT 1
   `;
   const orders = await query(orderSql, [atendimentoId]);
+  if (!orders.length) return null;
+  const order = orders[0];
+
+  const itemsSql = `
+    SELECT pr.nome as product, ip.quantidade as quantity, pr.valor as price
+    FROM Item_Pedido ip
+    INNER JOIN Produto pr ON pr.cod_produto = ip.cod_produto
+    WHERE ip.cod_pedido = ?
+  `;
+  const items = await query(itemsSql, [order.id]);
+  order.items = items;
+  return order;
+}
+
+async function getOrderDetails(orderId) {
+  const orderSql = `
+    SELECT 
+      p.cod_pedido as id,
+      p.data_pedido as created_at,
+      p.status,
+      p.forma_pag as payment_method,
+      p.observacao as notes,
+      p.valor_total,
+      e.logradouro, e.numero, e.complemento, e.bairro, e.ponto_ref,
+      c.cod_cliente as client_id,
+      c.nome as client_name
+    FROM Pedido p
+    INNER JOIN Endereco_Entrega e ON p.cod_endereco = e.cod_endereco
+    INNER JOIN Atendimento a ON a.cod_atendimento = p.cod_atendimento
+    INNER JOIN Cliente c ON c.cod_cliente = a.cod_cliente
+    WHERE p.cod_pedido = ?
+    LIMIT 1
+  `;
+  const orders = await query(orderSql, [orderId]);
   if (!orders.length) return null;
   const order = orders[0];
 
@@ -687,6 +783,7 @@ async function listOrders({ page = 1, pageSize = 20, search = '', clientId = nul
       p.data_pedido as created_at,
       p.status,
       p.forma_pag as payment_method,
+      p.valor_total as valor_total,
       c.cod_cliente as client_id,
       c.nome as client_name,
       (SELECT t.numero FROM Telefone t WHERE t.cod_cliente = c.cod_cliente ORDER BY t.cod_telefone LIMIT 1) as phone
@@ -713,6 +810,23 @@ async function updateOrderStatus(orderId, status) {
   const sql = 'UPDATE Pedido SET status = ? WHERE cod_pedido = ?';
   await query(sql, [status, orderId]);
   return { success: true };
+}
+
+/**
+ * Recalcula o valor_total de um pedido somando (preço atual do produto * quantidade)
+ * e atualiza a tabela Pedido. Retorna o novo total.
+ */
+async function recalculateOrderTotal(orderId) {
+  const totalRows = await query(
+    `SELECT COALESCE(SUM(pr.valor * ip.quantidade), 0) as total
+     FROM Item_Pedido ip
+     INNER JOIN Produto pr ON pr.cod_produto = ip.cod_produto
+     WHERE ip.cod_pedido = ?`,
+    [orderId]
+  );
+  const total = Number(totalRows[0]?.total || 0);
+  await query('UPDATE Pedido SET valor_total = ? WHERE cod_pedido = ?', [total, orderId]);
+  return { valor_total: total };
 }
 
 /**
@@ -760,12 +874,43 @@ async function createLog(logData) {
 }
 
 /**
- * Busca todos os produtos disponíveis
- * Tabela: Produto (cod_produto, nome, descricao, valor)
+ * Busca todos os produtos disponíveis para atendimento
+ * Tabela: Produto (cod_produto, nome, descricao, valor, disponivel)
  */
 async function getAllProducts() {
-  const sql = 'SELECT cod_produto as id, nome as name, descricao as description, valor as price FROM Produto ORDER BY nome';
+  const sql = 'SELECT cod_produto as id, nome as name, descricao as description, valor as price, qtde_estoque as stock FROM Produto WHERE disponivel = "S" AND qtde_estoque > 0 ORDER BY nome';
   return await query(sql);
+}
+
+/**
+ * Busca todos os produtos (admin) - incluindo indisponíveis
+ */
+async function getAllProductsAdmin() {
+  const sql = 'SELECT cod_produto as id, nome as name, descricao as description, valor as price, qtde_estoque as stock, disponivel as available FROM Produto ORDER BY nome';
+  return await query(sql);
+}
+
+/**
+ * Atualiza um produto
+ */
+async function updateProduct(productId, productData) {
+  const { nome, descricao, valor } = productData;
+  // Aceita tanto quantidade_estoque quanto qtde_estoque no payload
+  const qtde_estoque = (productData.qtde_estoque ?? productData.quantidade_estoque ?? 0);
+  const disponivel = (productData.disponivel ?? 'S');
+  const sql = 'UPDATE Produto SET nome = ?, descricao = ?, valor = ?, qtde_estoque = ?, disponivel = ? WHERE cod_produto = ?';
+  return await query(sql, [nome, descricao || null, valor, qtde_estoque, disponivel, productId]);
+}
+
+/**
+ * Cria um novo produto
+ */
+async function createProduct(productData) {
+  const { nome, descricao, valor } = productData;
+  const qtde_estoque = (productData.qtde_estoque ?? productData.quantidade_estoque ?? 0);
+  const disponivel = (productData.disponivel ?? 'S');
+  const sql = 'INSERT INTO Produto (cod_produto, nome, descricao, valor, qtde_estoque, disponivel) VALUES ((SELECT COALESCE(MAX(cod_produto), 0) + 1 FROM Produto p), ?, ?, ?, ?, ?)';
+  return await query(sql, [nome, descricao || null, valor, qtde_estoque, disponivel]);
 }
 
 // Exporta pool e funções
@@ -786,6 +931,7 @@ module.exports = {
   addPhone,
   getClientAddresses,
   addAddress,
+  updateAddress,
   setPrimaryAddress,
   deleteAddress,
   listClients,
@@ -797,6 +943,7 @@ module.exports = {
   createOrder,
   listOrders,
   updateOrderStatus,
+  recalculateOrderTotal,
   // Logs
   getAllLogs,
   createLog,
@@ -805,6 +952,10 @@ module.exports = {
   deletePhone,
   // Produtos
   getAllProducts,
+  getAllProductsAdmin,
+  updateProduct,
+  createProduct,
   // Relacionamentos
-  getOrderByAtendimento
+  getOrderByAtendimento,
+  getOrderDetails
 };

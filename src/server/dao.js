@@ -150,6 +150,15 @@ class DAO {
     }
   }
 
+  static async updateAddress(clientId, enderecoId, addressData) {
+    try {
+      return await db.updateAddress(clientId, enderecoId, addressData);
+    } catch (error) {
+      console.error('Erro ao atualizar endereço:', error.message);
+      throw error;
+    }
+  }
+
   static async setPrimaryAddress(clientId, enderecoId) {
     try {
       return await db.setPrimaryAddress(clientId, enderecoId);
@@ -206,6 +215,15 @@ class DAO {
     }
   }
 
+  static async getOrderDetails(orderId) {
+    try {
+      return await db.getOrderDetails(orderId);
+    } catch (error) {
+      console.error('Erro ao buscar detalhes do pedido:', error.message);
+      throw error;
+    }
+  }
+
   static async listOrders({ page = 1, pageSize = 20, search = '', clientId = null, status = '' }) {
     try {
       return await db.listOrders({ page, pageSize, search, clientId, status });
@@ -220,6 +238,15 @@ class DAO {
       return await db.updateOrderStatus(orderId, status);
     } catch (error) {
       console.error('Erro ao atualizar status do pedido:', error.message);
+      throw error;
+    }
+  }
+
+  static async recalculateOrderTotal(orderId) {
+    try {
+      return await db.recalculateOrderTotal(orderId);
+    } catch (error) {
+      console.error('Erro ao recalcular valor total:', error.message);
       throw error;
     }
   }
@@ -239,6 +266,23 @@ class DAO {
 
   static async deleteClient(id) {
     return await db.deleteClient(id);
+  }
+
+  // ===== PRODUTOS =====
+  static async getAllProducts() {
+    return await db.getAllProducts();
+  }
+
+  static async getAllProductsAdmin() {
+    return await db.getAllProductsAdmin();
+  }
+
+  static async updateProduct(productId, productData) {
+    return await db.updateProduct(productId, productData);
+  }
+
+  static async createProduct(productData) {
+    return await db.createProduct(productData);
   }
 }
 

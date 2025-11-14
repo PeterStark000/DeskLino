@@ -3,13 +3,20 @@ const DAO = require('../server/dao');
 class OrderController {
   static async create(req, res) {
     try {
-      const { client_id, items, notes, user } = req.body || {};
+      const { client_id, items, notes, user, forma_pag, address_id, valor_total } = req.body || {};
 
       if (!client_id || !items || !Array.isArray(items) || items.length === 0) {
         return res.status(400).json({ error: 'Cliente e itens são obrigatórios' });
       }
 
-      const orderId = await DAO.createOrder({ client_id, items, notes });
+      const orderId = await DAO.createOrder({
+        client_id,
+        items,
+        notes,
+        forma_pag: forma_pag || 'Dinheiro',
+        address_id: address_id || null,
+        valor_total: Number(valor_total) || 0
+      });
       await DAO.createLog({ 
         user, 
         type: 'PEDIDO', 
@@ -55,6 +62,21 @@ class OrderController {
     }
   }
 
+  static async getDetails(req, res) {
+    try {
+      const orderId = parseInt(req.params.id, 10);
+      if (!orderId) return res.status(400).json({ error: 'ID de pedido inválido' });
+
+      const order = await DAO.getOrderDetails(orderId);
+      if (!order) return res.status(404).json({ error: 'Pedido não encontrado' });
+
+      return res.json({ order });
+    } catch (error) {
+      console.error('[OrderController.getDetails]', error);
+      res.status(500).json({ error: 'Erro ao buscar detalhes do pedido' });
+    }
+  }
+
   static async updateStatus(req, res) {
     try {
       const id = Number(req.params.id);
@@ -65,6 +87,18 @@ class OrderController {
     } catch (error) {
       console.error('[OrderController.updateStatus]', error);
       res.status(500).json({ error: 'Erro ao atualizar status do pedido' });
+    }
+  }
+
+  static async correctTotal(req, res) {
+    try {
+      const id = Number(req.params.id);
+      if (!id) return res.status(400).json({ error: 'ID do pedido inválido' });
+      const result = await DAO.recalculateOrderTotal(id);
+      res.json({ success: true, valor_total: result.valor_total });
+    } catch (error) {
+      console.error('[OrderController.correctTotal]', error);
+      res.status(500).json({ error: 'Erro ao corrigir valor total do pedido' });
     }
   }
 }

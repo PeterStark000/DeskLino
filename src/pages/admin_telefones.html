@@ -25,6 +25,7 @@
         <a href="/admin/clientes" class="admin-tab-button py-3 px-1 text-gray-600 border-b-2 border-transparent hover:border-gray-300 transition-all">Gerenciar Clientes</a>
         <a href="/admin/telefones" class="admin-tab-button py-3 px-1 text-gray-900 border-b-2 border-blue-600">Gerenciar Telefones</a>
         <a href="/admin/pedidos" class="admin-tab-button py-3 px-1 text-gray-600 border-b-2 border-transparent hover:border-gray-300 transition-all">Gerenciar Pedidos</a>
+        <a href="/admin/produtos" class="admin-tab-button py-3 px-1 text-gray-600 border-b-2 border-transparent hover:border-gray-300 transition-all">Gerenciar Produtos</a>
       </nav>
     </div>
 
@@ -42,9 +43,9 @@
           <table class="min-w-full text-sm">
             <thead class="bg-gray-50 sticky top-0">
               <tr>
-                <th class="text-left p-2">ID</th>
-                <th class="text-left p-2">Telefone</th>
-                <th class="text-left p-2">Cliente</th>
+                <th class="text-left p-2 cursor-pointer hover:bg-gray-100" data-sort="id">ID <span class="sort-indicator"></span></th>
+                <th class="text-left p-2 cursor-pointer hover:bg-gray-100" data-sort="phone">Número <span class="sort-indicator"></span></th>
+                <th class="text-left p-2 cursor-pointer hover:bg-gray-100" data-sort="client_name">Cliente <span class="sort-indicator"></span></th>
                 <th class="text-left p-2">Ações</th>
               </tr>
             </thead>
