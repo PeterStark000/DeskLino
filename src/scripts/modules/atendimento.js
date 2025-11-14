@@ -12,6 +12,7 @@ export function initAtendimento() {
   const adminToggleButton = document.getElementById('admin-toggle-button');
   const adminClientesBtn = document.getElementById('btn-admin-clientes');
   const adminDeleteCustomerBtn = document.getElementById('admin-delete-customer');
+  const backBtn = document.getElementById('btn-back');
 
   if (knownBtn) {
     knownBtn.addEventListener('click', () => {
@@ -165,6 +166,13 @@ export function initAtendimento() {
       const customerNameEl = document.getElementById('cust-name');
       const customerName = customerNameEl ? customerNameEl.textContent : '';
       console.warn(`(Simulação) Botão de apagar cliente '${customerName}' clicado.`);
+      window.location.href = '/atendimento/idle';
+    });
+  }
+
+  // Botão voltar nas páginas de atendimento
+  if (backBtn) {
+    backBtn.addEventListener('click', () => {
       window.location.href = '/atendimento/idle';
     });
   }

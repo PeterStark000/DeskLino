@@ -1,0 +1,75 @@
+<header class="bg-white shadow-md sticky top-0 z-10">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between items-center h-16">
+      <div class="flex items-center gap-3">
+        <button id="btn-back" title="Voltar" class="px-3 py-2 rounded-md text-sm font-medium border text-gray-700 hover:bg-gray-50">Voltar</button>
+        <span class="text-xl font-bold text-blue-600">Picolino Gás</span>
+      </div>
+      <div class="flex items-center space-x-4">
+        <span class="text-gray-700">
+          Usuário: <strong id="atendente-nome" class="font-medium"></strong> (<span id="user-role-display"></span>)
+        </span>
+        <button id="logout-button" class="text-sm text-gray-500 hover:text-blue-600 underline">Sair</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main id="admin-panel" class="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+  <div class="bg-white rounded-xl shadow-xl border border-gray-200">
+    <div class="border-b border-gray-200">
+      <h2 class="text-2xl font-bold text-gray-900 p-6">Painel Administrativo</h2>
+      <nav class="flex space-x-4 px-6" id="admin-nav">
+        <a href="/admin/usuarios" class="admin-tab-button py-3 px-1 text-gray-600 border-b-2 border-transparent hover:border-gray-300 transition-all">Gerenciar Usuários</a>
+        <a href="/admin/logs" class="admin-tab-button py-3 px-1 text-gray-600 border-b-2 border-transparent hover:border-gray-300 transition-all">Histórico de Atendimentos</a>
+        <a href="/admin/clientes" class="admin-tab-button py-3 px-1 text-gray-600 border-b-2 border-transparent hover:border-gray-300 transition-all">Gerenciar Clientes</a>
+        <a href="/admin/telefones" class="admin-tab-button py-3 px-1 text-gray-600 border-b-2 border-transparent hover:border-gray-300 transition-all">Gerenciar Telefones</a>
+        <a href="/admin/pedidos" class="admin-tab-button py-3 px-1 text-gray-900 border-b-2 border-blue-600">Gerenciar Pedidos</a>
+      </nav>
+    </div>
+
+    <div class="p-6">
+      <div class="flex flex-wrap items-center gap-3 mb-4">
+        <input id="orders-search" type="text" placeholder="Buscar por cliente ou telefone..." class="w-full md:w-1/3 px-3 py-2 border rounded-lg" />
+        <input id="orders-client-id" type="number" min="1" placeholder="ID do Cliente (opcional)" class="w-full md:w-40 px-3 py-2 border rounded-lg" />
+        <select id="orders-status-filter" class="w-full md:w-48 px-3 py-2 border rounded-lg">
+          <option value="">Todos os status</option>
+          <option>Pendente</option>
+          <option>Em andamento</option>
+          <option>Entregue</option>
+          <option>Cancelado</option>
+        </select>
+        <button id="orders-search-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Buscar</button>
+        <button id="orders-clear-btn" class="px-4 py-2 bg-gray-200 rounded-lg">Limpar</button>
+      </div>
+
+      <div class="border rounded-lg overflow-hidden">
+        <div class="max-h-96 overflow-y-auto">
+          <table class="min-w-full text-sm">
+            <thead class="bg-gray-50 sticky top-0">
+              <tr>
+                <th class="text-left p-2">ID</th>
+                <th class="text-left p-2">Cliente</th>
+                <th class="text-left p-2">Telefone</th>
+                <th class="text-left p-2">Status</th>
+                <th class="text-left p-2">Pagamento</th>
+                <th class="text-left p-2">Data</th>
+                <th class="text-left p-2">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="admin-orders-body"></tbody>
+          </table>
+        </div>
+        <div class="p-3 flex items-center justify-between">
+          <div id="admin-orders-summary" class="text-xs text-gray-500"></div>
+          <div class="flex gap-2">
+            <button id="orders-page-prev" class="px-3 py-1 border rounded">Anterior</button>
+            <button id="orders-page-next" class="px-3 py-1 border rounded">Próxima</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script type="module" src="/static/scripts/modules/admin_pedidos.js"></script>

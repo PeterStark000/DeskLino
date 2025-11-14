@@ -206,6 +206,24 @@ class DAO {
     }
   }
 
+  static async listOrders({ page = 1, pageSize = 20, search = '', clientId = null, status = '' }) {
+    try {
+      return await db.listOrders({ page, pageSize, search, clientId, status });
+    } catch (error) {
+      console.error('Erro ao listar pedidos:', error.message);
+      throw error;
+    }
+  }
+
+  static async updateOrderStatus(orderId, status) {
+    try {
+      return await db.updateOrderStatus(orderId, status);
+    } catch (error) {
+      console.error('Erro ao atualizar status do pedido:', error.message);
+      throw error;
+    }
+  }
+
   // ===== CLIENTES (Admin) =====
   static async listClients({ page = 1, pageSize = 20, search = '' }) {
     return await db.listClients({ page, pageSize, search });
