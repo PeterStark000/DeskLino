@@ -15,7 +15,7 @@ export function initAdmin() {
     links.forEach(a => {
       const href = a.getAttribute('href') || '';
       if (role !== 'admin') {
-        // Atendente: só pode ver Gerenciar Clientes
+        // Atendente: pode ver Gerenciar Clientes e Gerenciar Telefones
         if (href.includes('/admin/usuarios') || href.includes('/admin/logs')) {
           a.classList.add('hidden');
         }
@@ -24,7 +24,7 @@ export function initAdmin() {
     // Redireciona atendente para clientes se estiver em outra aba
     if (role !== 'admin') {
       const path = window.location.pathname;
-      if (path.startsWith('/admin') && !path.includes('/admin/clientes')) {
+      if (path.startsWith('/admin') && !(path.includes('/admin/clientes') || path.includes('/admin/telefones'))) {
         window.location.href = '/admin/clientes';
       }
     }
@@ -132,7 +132,7 @@ export function initAdmin() {
       }
       // Para atendente: bloquear abas que não são clientes
       const isAdmin = role === 'admin';
-      if (!isAdmin && href !== '/admin/clientes') {
+      if (!isAdmin && href !== '/admin/clientes' && href !== '/admin/telefones') {
         e.preventDefault();
         return;
       }

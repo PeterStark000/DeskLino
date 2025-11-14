@@ -1,3 +1,5 @@
+import { toast, setPendingToast } from './toast.js';
+
 export function initAtendimento() {
   // Carregar produtos dinamicamente
   loadProducts();
@@ -28,6 +30,7 @@ export function initAtendimento() {
 
   if (endCallButtons && endCallButtons.length) {
     endCallButtons.forEach(btn => btn.addEventListener('click', () => {
+      setPendingToast('info', 'Atendimento finalizado');
       window.location.href = '/atendimento/idle';
     }));
   }
@@ -134,7 +137,7 @@ export function initAtendimento() {
         // 1) Buscar cliente por telefone para obter ID
         const clientResp = await fetch(`/api/clientes/${encodeURIComponent(phone)}`);
         if (!clientResp.ok) {
-          alert('Não foi possível identificar o cliente pelo telefone.');
+          toast.error('Não foi possível identificar o cliente pelo telefone.');
           return;
         }
         const { customer } = await clientResp.json();
@@ -155,11 +158,12 @@ export function initAtendimento() {
           throw new Error(err.error || 'Erro ao registrar pedido');
         }
 
-        alert('Pedido registrado com sucesso!');
-        window.location.href = '/atendimento/idle';
+  // Persistir toast para após redirecionar
+  setPendingToast('success', 'Pedido registrado com sucesso!');
+  window.location.href = '/atendimento/idle';
       } catch (e) {
         console.error('Falha ao registrar pedido (identificado):', e);
-        alert(e.message);
+        toast.error(e.message);
       }
     });
   }
@@ -170,7 +174,7 @@ export function initAtendimento() {
     btnSaveAndOrderNew.addEventListener('click', async () => {
       const selectedProducts = getSelectedProducts('new');
       if (selectedProducts.length === 0) {
-        alert('Selecione pelo menos um produto.');
+        toast.warning('Selecione pelo menos um produto.');
         return;
       }
       await saveNewClientAndOrder(selectedProducts, true);
@@ -198,12 +202,15 @@ export function initAtendimento() {
         clientSearchResults.classList.remove('hidden');
         return;
       }
-      clientSearchResults.innerHTML = customers.map(c => `
-        <button class="w-full text-left px-4 py-3 hover:bg-gray-50 border-b last:border-b-0 client-result" data-client-id="${c.id}" data-client-phone="${c.phone}">
+      clientSearchResults.innerHTML = customers.map(c => {
+        const phonesLine = c.phones || c.phone || '-';
+        const emailPart = c.email ? ` - ${c.email}` : '';
+        return `
+        <button class="w-full text-left px-4 py-3 hover:bg-gray-50 border-b last:border-b-0 client-result" data-client-id="${c.id}" data-client-phone="${c.phone || ''}">
           <div class="font-medium text-sm text-gray-900">${c.name}</div>
-          <div class="text-xs text-gray-500">${c.phone} ${c.email ? ' - ' + c.email : ''}</div>
-        </button>
-      `).join('');
+          <div class="text-xs text-gray-500">${phonesLine}${emailPart}</div>
+        </button>`;
+      }).join('');
 
       clientSearchResults.querySelectorAll('.client-result').forEach(btn => {
         btn.addEventListener('click', async () => {
@@ -231,7 +238,12 @@ export function initAtendimento() {
         const resp = await fetch(`/api/clientes/search?q=${encodeURIComponent(term)}`);
         if (!resp.ok) throw new Error('Erro ao buscar');
         const { customers } = await resp.json();
-        renderResults(customers);
+        // Dedupe por id (garantia extra caso backend retorne duplicados)
+        const map = new Map();
+        for (const c of customers || []) {
+          if (!map.has(c.id)) map.set(c.id, c);
+        }
+        renderResults(Array.from(map.values()));
       } catch (e) {
         clientSearchResults.innerHTML = `<div class="p-3 text-sm text-red-600">Erro ao buscar clientes: ${e.message}</div>`;
         clientSearchResults.classList.remove('hidden');
@@ -281,6 +293,8 @@ async function saveNewClientAndOrder(selectedProducts, createOrder) {
   try {
     const phone = document.getElementById('new-phone')?.textContent?.trim();
     const linkClientId = sessionStorage.getItem('linkClientId');
+    const emailInput = document.getElementById('new-email');
+    const emailVal = emailInput ? emailInput.value.trim() : '';
     
     // Se está vinculando a um cliente existente
     if (linkClientId) {
@@ -293,6 +307,13 @@ async function saveNewClientAndOrder(selectedProducts, createOrder) {
         });
         if (!phoneResp.ok) throw new Error('Erro ao adicionar telefone');
         
+        // Tenta atualizar email do cliente (opcional)
+        if (emailVal) {
+          try {
+            await fetch(`/api/clientes/${linkClientId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: emailVal }) });
+          } catch {}
+        }
+
         // Se também deve criar pedido
         if (createOrder && selectedProducts.length > 0) {
           const paymentMethod = document.getElementById('payment-method-new')?.value || 'Dinheiro';
@@ -302,16 +323,16 @@ async function saveNewClientAndOrder(selectedProducts, createOrder) {
             body: JSON.stringify({ client_id: linkClientId, items: selectedProducts, notes: '', forma_pag: paymentMethod })
           });
           if (!orderResp.ok) throw new Error('Erro ao registrar pedido');
-          alert('Telefone vinculado e pedido registrado com sucesso!');
+          setPendingToast('success', 'Telefone vinculado e pedido registrado com sucesso!');
         } else {
-          alert('Telefone vinculado ao cliente com sucesso!');
+          setPendingToast('success', 'Telefone vinculado ao cliente com sucesso!');
         }
         
         sessionStorage.removeItem('linkClientId');
         window.location.href = '/atendimento/idle';
         return;
       } catch (e) {
-        alert('Erro: ' + e.message);
+        toast.error('Erro: ' + e.message);
         return;
       }
     }
@@ -319,6 +340,7 @@ async function saveNewClientAndOrder(selectedProducts, createOrder) {
     // Caso contrário, cria novo cliente
     const name = document.getElementById('new-name')?.value?.trim();
     const tipoCliente = document.getElementById('new-tipo-cliente')?.value;
+    const email = emailVal;
     const documento = document.getElementById('new-doc')?.value?.trim();
     const addressRaw = document.getElementById('new-address')?.value?.trim();
     const bairro = document.getElementById('new-bairro')?.value?.trim();
@@ -327,22 +349,22 @@ async function saveNewClientAndOrder(selectedProducts, createOrder) {
     const paymentMethod = document.getElementById('payment-method-new')?.value || 'Dinheiro';
 
     if (!phone || !name || !addressRaw || !bairro || !tipoCliente) {
-      alert('Telefone, nome, endereço, bairro e tipo de cliente são obrigatórios.');
+      toast.warning('Telefone, nome, endereço, bairro e tipo de cliente são obrigatórios.');
       return;
     }
 
     if (!documento) {
-      alert('CPF ou CNPJ é obrigatório.');
+      toast.warning('CPF ou CNPJ é obrigatório.');
       return;
     }
     
     const digitsOnly = documento.replace(/\D/g, '');
     if (tipoCliente === 'PF' && digitsOnly.length !== 11) {
-      alert('CPF deve ter 11 dígitos.');
+      toast.warning('CPF deve ter 11 dígitos.');
       return;
     }
     if (tipoCliente === 'PJ' && digitsOnly.length !== 14) {
-      alert('CNPJ deve ter 14 dígitos.');
+      toast.warning('CNPJ deve ter 14 dígitos.');
       return;
     }
     
@@ -363,7 +385,7 @@ async function saveNewClientAndOrder(selectedProducts, createOrder) {
     const clientResp = await fetch('/api/clientes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone, name, address, number, bairro, ref, notes, user: user.name, tipo_cliente: tipoCliente, documento: digitsOnly })
+      body: JSON.stringify({ phone, name, email, address, number, bairro, ref, notes, user: user.name, tipo_cliente: tipoCliente, documento: digitsOnly })
     });
     if (!clientResp.ok) {
       const err = await clientResp.json().catch(() => ({}));
@@ -383,15 +405,15 @@ async function saveNewClientAndOrder(selectedProducts, createOrder) {
         const err = await orderResp.json().catch(() => ({}));
         throw new Error(err.error || 'Erro ao registrar pedido');
       }
-      alert('Cliente salvo e pedido registrado com sucesso!');
+      setPendingToast('success', 'Cliente salvo e pedido registrado com sucesso!');
     } else {
-      alert('Cliente salvo com sucesso!');
+      setPendingToast('success', 'Cliente salvo com sucesso!');
     }
     
     window.location.href = '/atendimento/idle';
   } catch (e) {
     console.error('Falha ao salvar cliente:', e);
-    alert(e.message);
+    toast.error(e.message);
   }
 }
 
@@ -416,6 +438,7 @@ async function fillNewClientForm(phone, clientId) {
     // Preenche campos do formulário (desabilitados para não alterar)
     const nameInput = document.getElementById('new-name');
     const addressInput = document.getElementById('new-address');
+    const emailInput = document.getElementById('new-email');
     const bairroInput = document.getElementById('new-bairro');
     const refInput = document.getElementById('new-ref');
     const notesInput = document.getElementById('new-notes');
@@ -424,6 +447,10 @@ async function fillNewClientForm(phone, clientId) {
       nameInput.value = customer.name || '';
       nameInput.setAttribute('readonly', 'true');
       nameInput.classList.add('bg-gray-100', 'text-gray-600');
+    }
+    if (emailInput) {
+      emailInput.value = customer.email || '';
+      // email permanece editável para atualização opcional
     }
     if (addressInput && customer.address) {
       const fullAddr = [customer.address, customer.number].filter(Boolean).join(', ');
@@ -582,10 +609,10 @@ async function loadClientAddresses(clientId) {
             method: 'PUT'
           });
           if (!response.ok) throw new Error('Erro ao definir principal');
-          alert('Endereço principal atualizado!');
+          toast.success('Endereço principal atualizado!');
           await loadClientAddresses(clientId);
         } catch (e) {
-          alert('Erro: ' + e.message);
+          toast.error('Erro: ' + e.message);
         }
       };
     }
@@ -595,7 +622,7 @@ async function loadClientAddresses(clientId) {
       btnDelete.onclick = async () => {
         const selectedId = parseInt(selectDisplay?.value, 10);
         if (!selectedId) {
-          alert('Selecione um endereço primeiro');
+          toast.warning('Selecione um endereço primeiro');
           return;
         }
         if (!confirm('Tem certeza que deseja apagar este endereço?')) {
@@ -606,10 +633,10 @@ async function loadClientAddresses(clientId) {
             method: 'DELETE'
           });
           if (!response.ok) throw new Error('Erro ao apagar endereço');
-          alert('Endereço apagado com sucesso!');
+          toast.success('Endereço apagado com sucesso!');
           await loadClientAddresses(clientId);
         } catch (e) {
-          alert('Erro: ' + e.message);
+          toast.error('Erro: ' + e.message);
         }
       };
     }
@@ -636,7 +663,7 @@ async function loadClientAddresses(clientId) {
         const principal = document.getElementById('addr-principal')?.checked ? 'S' : 'N';
         
         if (!nome_end || !logradouro || !numero || !bairro) {
-          alert('Preencha Nome, Logradouro, Número e Bairro');
+          toast.warning('Preencha Nome, Logradouro, Número e Bairro');
           return;
         }
         
@@ -648,7 +675,7 @@ async function loadClientAddresses(clientId) {
           });
           if (!response.ok) throw new Error('Erro ao adicionar endereço');
           
-          alert('Endereço adicionado com sucesso!');
+          toast.success('Endereço adicionado com sucesso!');
           form.classList.add('hidden');
           // Limpa campos
           ['addr-nome', 'addr-logradouro', 'addr-numero', 'addr-bairro', 'addr-complemento', 'addr-ref'].forEach(id => {
@@ -665,7 +692,7 @@ async function loadClientAddresses(clientId) {
             newSelect.dispatchEvent(new Event('change'));
           }
         } catch (e) {
-          alert('Erro ao salvar endereço: ' + e.message);
+          toast.error('Erro ao salvar endereço: ' + e.message);
         }
       };
     }
@@ -859,7 +886,7 @@ function openCallModal({ defaultPhone, route }) {
   btnConfirm.onclick = async () => {
     const entered = phoneInput.value.trim();
     if (!entered) {
-      alert('Informe um número de telefone.');
+      toast.warning('Informe um número de telefone.');
       return;
     }
 
@@ -872,12 +899,12 @@ function openCallModal({ defaultPhone, route }) {
       const clientExists = response.ok;
 
       if (isKnownCustomer && !clientExists) {
-        alert('Cliente não encontrado no sistema. Use a opção "Simular Chamada (Novo Cliente)" para cadastrar.');
+        toast.warning('Cliente não encontrado no sistema. Use a opção "Simular Chamada (Novo Cliente)" para cadastrar.');
         return;
       }
 
       if (isNewCustomer && clientExists) {
-        alert('Este telefone já está cadastrado. Use a opção "Simular Chamada (Cliente Identificado)".');
+        toast.warning('Este telefone já está cadastrado. Use a opção "Simular Chamada (Cliente Identificado)".');
         return;
       }
 
@@ -886,7 +913,7 @@ function openCallModal({ defaultPhone, route }) {
       window.location.href = route;
     } catch (error) {
       console.error('Erro ao validar telefone:', error);
-      alert('Erro ao validar telefone. Tente novamente.');
+      toast.error('Erro ao validar telefone. Tente novamente.');
     }
   };
 

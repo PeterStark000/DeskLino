@@ -1,3 +1,5 @@
+import { toast } from './toast.js';
+
 let state = { page: 1, pageSize: 20, search: '' };
 
 function formatDocument(digits, tipo) {
@@ -66,7 +68,7 @@ function renderClients({ rows, page, pageSize, total }) {
 async function handleRowAction(action, id) {
   if (action === 'edit') {
     const resp = await fetch(`/api/clientes/id/${id}`);
-    if (!resp.ok) { alert('Não foi possível buscar o cliente'); return; }
+    if (!resp.ok) { toast.error('Não foi possível buscar o cliente'); return; }
     const { customer } = await resp.json();
     openEditDialog(customer);
   } else if (action === 'delete') {
@@ -74,9 +76,10 @@ async function handleRowAction(action, id) {
     const resp = await fetch(`/api/clientes/${id}`, { method: 'DELETE' });
     if (!resp.ok) {
       const err = await resp.json().catch(()=>({}));
-      alert(err.error || 'Falha ao apagar');
+      toast.error(err.error || 'Falha ao apagar');
       return;
     }
+    toast.success('Cliente apagado com sucesso!');
     await reload();
   }
 }
@@ -120,7 +123,7 @@ async function loadAddresses(clientId) {
           const resp = await fetch(`/api/clientes/${clientId}/enderecos/${addrId}`, { method: 'DELETE' });
           if (!resp.ok) {
             const err = await resp.json().catch(()=>({}));
-            alert(err.error || 'Falha ao apagar endereço');
+            toast.error(err.error || 'Falha ao apagar endereço');
             return;
           }
           await loadAddresses(clientId);
@@ -186,7 +189,7 @@ function readAddrForm(defaultPrincipal) {
   const ponto_ref = document.getElementById('addr-ref').value.trim();
   const principal = document.getElementById('addr-principal').checked ? 'S' : (defaultPrincipal ? 'S' : 'N');
   if (!nome_end || !logradouro || !numero || !bairro) {
-    alert('Preencha: Apelido, Logradouro, Número e Bairro');
+    toast.warning('Preencha: Apelido, Logradouro, Número e Bairro');
     return null;
   }
   return { nome_end, logradouro, numero, complemento, bairro, ponto_ref, principal };
@@ -198,7 +201,7 @@ async function addAddress(clientId, payload) {
   });
   if (!resp.ok) {
     const err = await resp.json().catch(()=>({}));
-    alert(err.error || 'Falha ao adicionar endereço');
+    toast.error(err.error || 'Falha ao adicionar endereço');
     return false;
   }
   return true;
@@ -262,6 +265,7 @@ function openEditDialog(customer) {
       if (!payload) return;
       const ok = await addAddress(customer.id, payload);
       if (ok) {
+        toast.success('Endereço adicionado com sucesso!');
         toggleAddrForm(false);
         await loadAddresses(customer.id);
       }
@@ -282,10 +286,11 @@ function openEditDialog(customer) {
     const resp = await fetch(`/api/clientes/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
     if (!resp.ok) {
       const err = await resp.json().catch(()=>({}));
-      alert(err.error || 'Falha ao salvar');
+      toast.error(err.error || 'Falha ao salvar');
       return;
     }
     dlg.close();
+    toast.success('Cliente atualizado com sucesso!');
     await reload();
   };
 }

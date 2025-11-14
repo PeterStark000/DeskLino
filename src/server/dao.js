@@ -94,6 +94,25 @@ class DAO {
     }
   }
 
+    // Telefones (admin)
+    static async listAllPhones({ page, pageSize, search }) {
+      try {
+        return await db.listAllPhones({ page, pageSize, search });
+      } catch (e) { throw e; }
+    }
+
+    static async updatePhone(id, numero) {
+      try {
+        return await db.updatePhone(id, numero);
+      } catch (e) { throw e; }
+    }
+
+    static async deletePhone(id) {
+      try {
+        return await db.deletePhone(id);
+      } catch (e) { throw e; }
+    }
+
   // Endereços
   static async getClientAddresses(clientId) {
     try {

@@ -152,7 +152,8 @@ async function searchClients(searchTerm) {
       c.email,
       c.tipo_cliente,
       c.observacoes as notes,
-      t.numero as phone,
+      (SELECT t.numero FROM Telefone t WHERE t.cod_cliente = c.cod_cliente ORDER BY t.cod_telefone LIMIT 1) as phone,
+      (SELECT GROUP_CONCAT(t.numero ORDER BY t.cod_telefone SEPARATOR ', ') FROM Telefone t WHERE t.cod_cliente = c.cod_cliente) as phones,
       e.logradouro as address,
       e.numero as number,
       e.complemento,
@@ -161,11 +162,11 @@ async function searchClients(searchTerm) {
       pf.cpf,
       pj.cnpj
     FROM Cliente c
-    INNER JOIN Telefone t ON c.cod_cliente = t.cod_cliente
     LEFT JOIN Endereco_Entrega e ON c.cod_cliente = e.cod_cliente AND e.principal = 'S'
     LEFT JOIN Pessoa_Fisica pf ON c.cod_cliente = pf.cod_cliente
     LEFT JOIN Pessoa_Juridica pj ON c.cod_cliente = pj.cod_cliente
     WHERE c.nome LIKE ? OR c.email LIKE ?
+    ORDER BY c.nome ASC
     LIMIT 10
   `;
   const term = `%${searchTerm}%`;
@@ -327,6 +328,46 @@ async function addPhone(clientId, numero) {
   } finally {
     connection.release();
   }
+}
+
+// =========================
+// Telefones - Admin (listar/editar/excluir)
+// =========================
+async function listAllPhones({ page = 1, pageSize = 20, search = '' }) {
+  const offset = (page - 1) * pageSize;
+  const hasSearch = !!search;
+  const term = `%${search}%`;
+  const where = hasSearch ? 'WHERE t.numero LIKE ? OR c.nome LIKE ?' : '';
+  const params = hasSearch ? [term, term] : [];
+
+  const sql = `
+    SELECT t.cod_telefone as id, t.numero, c.cod_cliente as client_id, c.nome as client_name
+    FROM Telefone t
+    INNER JOIN Cliente c ON c.cod_cliente = t.cod_cliente
+    ${where}
+    ORDER BY t.cod_telefone DESC
+    LIMIT ? OFFSET ?`;
+  const rows = await query(sql, [...params, pageSize, offset]);
+
+  const countSql = `
+    SELECT COUNT(*) as total
+    FROM Telefone t INNER JOIN Cliente c ON c.cod_cliente = t.cod_cliente
+    ${where}`;
+  const totalRows = await query(countSql, params);
+  const total = totalRows[0]?.total || 0;
+  return { page, pageSize, total, rows };
+}
+
+async function updatePhone(id, numero) {
+  const sql = 'UPDATE Telefone SET numero = ? WHERE cod_telefone = ?';
+  await query(sql, [numero, id]);
+  return { success: true };
+}
+
+async function deletePhone(id) {
+  const sql = 'DELETE FROM Telefone WHERE cod_telefone = ?';
+  await query(sql, [id]);
+  return { success: true };
 }
 
 // =========================
@@ -687,6 +728,9 @@ module.exports = {
   // Logs
   getAllLogs,
   createLog,
+  listAllPhones,
+  updatePhone,
+  deletePhone,
   // Produtos
   getAllProducts,
   // Relacionamentos

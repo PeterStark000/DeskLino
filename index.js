@@ -11,6 +11,7 @@ const UserController = require('./src/controllers/userController');
 const LogController = require('./src/controllers/logController');
 const ClientController = require('./src/controllers/clientController');
 const ProductController = require('./src/controllers/productController');
+const PhoneController = require('./src/controllers/phoneController');
 const OrderController = require('./src/controllers/orderController');
 
 // Middlewares
@@ -37,7 +38,8 @@ const pages = [
   { path: '/atendimento/novo', file: 'atendimento_novo.html', title: 'Atendimento - Novo Cliente' },
   { path: '/admin/usuarios', file: 'admin_usuarios.html', title: 'Admin - Usuários' },
   { path: '/admin/logs', file: 'admin_logs.html', title: 'Admin - Logs' },
-  { path: '/admin/clientes', file: 'admin_clientes.html', title: 'Admin - Clientes' }
+  { path: '/admin/clientes', file: 'admin_clientes.html', title: 'Admin - Clientes' },
+  { path: '/admin/telefones', file: 'admin_telefones.html', title: 'Admin - Telefones' }
 ];
 
 pages.forEach(({ path, redirect, file, title }) => {
@@ -71,6 +73,12 @@ app.get('/api/clientes/:id/pedidos', ClientController.getOrderHistory);
 app.get('/api/produtos', ProductController.getAll);
 app.post('/api/pedidos', OrderController.create);
 app.get('/api/atendimentos/:id/pedido', OrderController.getByAtendimento);
+
+// Telefones (admin)
+app.get('/api/telefones', PhoneController.list);
+app.post('/api/telefones', PhoneController.create);
+app.put('/api/telefones/:id', PhoneController.update);
+app.delete('/api/telefones/:id', PhoneController.remove);
 
 // Start server e testa conexão DB
 app.listen(port, async () => {

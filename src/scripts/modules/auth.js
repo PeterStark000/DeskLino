@@ -1,3 +1,5 @@
+import { toast } from './toast.js';
+
 export function initAuth() {
   const loginForm = document.getElementById('login-form');
   const atendenteNome = document.getElementById('atendente-nome');
@@ -22,7 +24,7 @@ export function initAuth() {
         localStorage.setItem('user', JSON.stringify(data.user));
         window.location.href = '/atendimento/idle';
       } else {
-        alert('Usuário ou senha inválidos');
+        toast.error('Usuário ou senha inválidos');
       }
     });
   }

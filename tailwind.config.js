@@ -2,7 +2,8 @@
 module.exports = {
   content: [
     "./src/pages/**/*.html",
-    "./src/scripts/**/*.js"
+    "./src/scripts/**/*.js",
+    "./node_modules/flowbite/**/*.js"
   ],
   safelist: [
     // Garantir utilitários de espaçamento usados dinamicamente
@@ -15,5 +16,7 @@ module.exports = {
       }
     },
   },
-  plugins: [],
+  plugins: [
+    require('flowbite/plugin')
+  ],
 };

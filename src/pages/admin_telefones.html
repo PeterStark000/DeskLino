@@ -1,0 +1,89 @@
+<header class="bg-white shadow-md sticky top-0 z-10">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between items-center h-16">
+      <div class="flex items-center gap-3">
+        <button id="btn-back" title="Voltar" class="px-3 py-2 rounded-md text-sm font-medium border text-gray-700 hover:bg-gray-50">Voltar</button>
+        <span class="text-xl font-bold text-blue-600">Picolino Gás</span>
+      </div>
+      <div class="flex items-center space-x-4">
+        <span class="text-gray-700">
+          Usuário: <strong id="atendente-nome" class="font-medium"></strong> (<span id="user-role-display"></span>)
+        </span>
+        <button id="logout-button" class="text-sm text-gray-500 hover:text-blue-600 underline">Sair</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main id="admin-panel" class="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+  <div class="bg-white rounded-xl shadow-xl border border-gray-200">
+    <div class="border-b border-gray-200">
+      <h2 class="text-2xl font-bold text-gray-900 p-6">Painel Administrativo</h2>
+      <nav class="flex space-x-4 px-6" id="admin-nav">
+        <a href="/admin/usuarios" class="admin-tab-button py-3 px-1 text-gray-600 border-b-2 border-transparent hover:border-gray-300 transition-all">Gerenciar Usuários</a>
+        <a href="/admin/logs" class="admin-tab-button py-3 px-1 text-gray-600 border-b-2 border-transparent hover:border-gray-300 transition-all">Histórico de Alterações</a>
+        <a href="/admin/clientes" class="admin-tab-button py-3 px-1 text-gray-600 border-b-2 border-transparent hover:border-gray-300 transition-all">Gerenciar Clientes</a>
+        <a href="/admin/telefones" class="admin-tab-button py-3 px-1 text-gray-900 border-b-2 border-blue-600">Gerenciar Telefones</a>
+      </nav>
+    </div>
+
+    <div class="p-6">
+      <div class="flex items-center gap-4 mb-4">
+        <input id="phone-search" type="text" placeholder="Buscar por número ou nome do cliente..." class="w-full px-3 py-2 border rounded-lg" />
+        <button id="phone-search-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Buscar</button>
+        <button id="phone-clear-btn" class="px-4 py-2 bg-gray-200 rounded-lg">Limpar</button>
+      </div>
+
+      
+
+      <div class="border rounded-lg overflow-hidden">
+        <div class="max-h-96 overflow-y-auto">
+          <table class="min-w-full text-sm">
+            <thead class="bg-gray-50 sticky top-0">
+              <tr>
+                <th class="text-left p-2">ID</th>
+                <th class="text-left p-2">Telefone</th>
+                <th class="text-left p-2">Cliente</th>
+                <th class="text-left p-2">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="admin-phones-body"></tbody>
+          </table>
+        </div>
+        <div class="p-3 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <button id="btn-open-add-phone" class="px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 transition">Adicionar telefone</button>
+            <div id="admin-phones-summary" class="text-xs text-gray-500"></div>
+          </div>
+          <div class="flex gap-2">
+            <button id="phones-page-prev" class="px-3 py-1 border rounded">Anterior</button>
+            <button id="phones-page-next" class="px-3 py-1 border rounded">Próxima</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Adicionar Telefone -->
+      <dialog id="add-phone-modal" class="rounded-xl w-full max-w-md p-0">
+        <div class="p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Adicionar Telefone</h3>
+          <div class="space-y-3">
+            <div>
+              <label for="add-phone-modal-client" class="block text-sm font-medium text-gray-700 mb-1">ID do Cliente</label>
+              <input id="add-phone-modal-client" type="number" min="1" class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Ex.: 123" />
+            </div>
+            <div>
+              <label for="add-phone-modal-number" class="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
+              <input id="add-phone-modal-number" type="text" class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="(00) 00000-0000" />
+            </div>
+          </div>
+          <div class="mt-6 flex justify-end gap-2">
+            <button id="add-phone-cancel" class="px-4 py-2 rounded border">Cancelar</button>
+            <button id="add-phone-confirm" class="px-4 py-2 rounded bg-blue-600 text-white">Salvar</button>
+          </div>
+        </div>
+      </dialog>
+    </div>
+  </div>
+</main>
+
+<script type="module" src="/static/scripts/modules/admin_telefones.js"></script>
