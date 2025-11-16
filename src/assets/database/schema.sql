@@ -114,7 +114,7 @@ INSERT INTO `produto` VALUES
 (12,'Água PET 5L C/2','Pacote com 2 garrafas de água Igarapé 5 litros.',16.00,0,'S'),
 (13,'Água PET 500mL C/12','Pacote com 12 unidades de água 500mL Água Azul sem gás.',14.00,200,'S'),
 (14,'Copo Descartável 48un','Caixa com 48 copos descartáveis.',38.00,0,'S'),
-(15,'Galão Vazio 20L','Vasilhame vazio de 20 litros para troca.',11.00,100,'S'),
+(15,'Galão Vazio 20L','Vasilhame vazio de 20 litros para troca.',20.00,100,'S'),
 (16,'Água Copo 200mL C/48','Fardo com 48 copos de água 200mL Igarapé.',40.00,2,'S'),
 (17,'Regulador de Gás NS05C10','Regulador de gás sem manômetro, modelo NS05C10, 1kg.',50.00,40,'S'),
 (18,'Regulador de Gás ALIAS04C10','Regulador de gás sem manômetro, modelo ALIAS04C10, 1kg.',50.00,20,'S'),
