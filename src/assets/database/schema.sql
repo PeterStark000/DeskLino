@@ -99,8 +99,36 @@ CREATE TABLE `produto` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Inserção de dados na tabela `produto`
-INSERT INTO `produto` VALUES (1,'GLP Cilindro P20','Cilindro de GLP modelo P20 para uso residencial e comercial.',293.00,293,'S'),(2,'GLP Botijão P13','Botijão de GLP modelo P13, padrão residencial.',120.00,3000,'S'),(3,'GLP Cilindro P45','Cilindro de GLP modelo P45, uso industrial.',460.00,350,'S'),(4,'Botijão Vazio P20','Botijão vazio modelo P20 para troca.',0.00,127,'S'),(5,'Botijão Vazio P13','Botijão vazio modelo P13 para reposição ou troca.',200.00,3000,'S'),(6,'Água Galão 10L','Galão de água mineral Igarapé com 10 litros.',12.00,1500,'S'),(7,'Água Galão 20L','Galão de água mineral Igarapé com 20 litros.',19.00,2000,'S'),(8,'Água 510mL Sem Gás','Água mineral Igarapé 510 mL sem gás.',6.55,294,'S'),(9,'Botijão Vazio P45','Botijão vazio modelo P45 industrial.',0.00,87,'S'),(10,'Água PET 1,5L C/6','Pacote com 6 garrafas de água 1,5L Igarapé sem gás.',16.00,350,'S'),(11,'Água PET 500mL C/12 Gás','Pacote com 12 unidades de água Igarapé 500mL com gás.',22.00,58,'S'),(12,'Água PET 5L C/2','Pacote com 2 garrafas de água Igarapé 5 litros.',16.00,100,'S'),(13,'Água PET 500mL C/12','Pacote com 12 unidades de água 500mL Água Azul sem gás.',14.00,200,'S'),(14,'Copo Descartável 48un','Caixa com 48 copos descartáveis.',38.00,30,'S'),(15,'Galão Vazio 20L','Vasilhame vazio de 20 litros para troca.',11.00,100,'S'),(16,'Água Copo 200mL C/48','Fardo com 48 copos de água 200mL Igarapé.',40.00,2,'S'),(17,'Regulador de Gás NS05C10','Regulador de gás sem manômetro, modelo NS05C10, 1kg.',50.00,40,'S'),(18,'Regulador de Gás ALIAS04C10','Regulador de gás sem manômetro, modelo ALIAS04C10, 1kg.',50.00,20,'S'),(19,'Mangueira 3/8\"','Mangueira transparente 3/8\" tarja azul.',10.00,1,'S'),(20,'Abraçadeira 13–19mm','Abraçadeira RSF 13–19mm para mangueira de gás.',2.50,9,'S'),(21,'Água 500mL Tropical','Garrafa de água 500mL marca Tropical.',14.00,5,'S'),(22,'Água 500mL Pura da Serra','Água mineral 500mL sem gás marca Pura da Serra.',14.00,900,'S'),(23,'Água 1,5L Tropical','Garrafa de água 1,5L marca Tropical.',14.00,600,'S'),(24,'Água 1,5L Pura da Serra','Garrafa de água 1,5L da marca Pura da Serra.',14.00,600,'S'),(25,'Água 1,5L Com Gás','Garrafa de água 1,5L Igarapé com gás.',22.00,540,'S'),(26,'Água PET 500mL C/6','Pacote com 6 unidades de água 500mL Igarapé sem gás.',16.00,80,'S'),(27,'Garrafão PP','Vasilhame de garrafão tipo PP para água.',20.00,1541,'S'),(28,'Água 1,5L Água Azul','Garrafa de água 1,5L marca Água Azul.',14.00,15,'S'),(29,'Água Igarapé 10L','Água mineral Igarapé em garrafa PET de 10 litros.',16.00,10,'S');
-
+INSERT INTO `produto` VALUES 
+(1,'GLP Cilindro P20','Cilindro de GLP modelo P20 para uso residencial e comercial.',200.00,293,'S'),
+(2,'GLP Botijão P13','Botijão de GLP modelo P13, padrão residencial.',120.00,3000,'S'),
+(3,'GLP Cilindro P45','Cilindro de GLP modelo P45, uso industrial.',460.00,350,'S'),
+(4,'Botijão Vazio P20','Botijão vazio modelo P20 para troca.',600.00,127,'S'),
+(5,'Botijão Vazio P13','Botijão vazio modelo P13 para reposição ou troca.',200.00,3000,'S'),
+(6,'Água Galão 10L','Galão de água mineral Igarapé com 10 litros.',16.00,10,'S'),
+(7,'Água Galão 20L','Galão de água mineral Igarapé com 20 litros.',19.00,2000,'S'),
+(8,'Água 510mL Sem Gás','Água mineral Igarapé 510 mL sem gás.',15.00,294,'S'),
+(9,'Botijão Vazio P45','Botijão vazio modelo P45 industrial.',500.00,87,'S'),
+(10,'Água PET 1,5L C/6','Pacote com 6 garrafas de água 1,5L Igarapé sem gás.',16.00,0,'S'),
+(11,'Água PET 500mL C/12 Gás','Pacote com 12 unidades de água Igarapé 500mL com gás.',22.00,58,'S'),
+(12,'Água PET 5L C/2','Pacote com 2 garrafas de água Igarapé 5 litros.',16.00,0,'S'),
+(13,'Água PET 500mL C/12','Pacote com 12 unidades de água 500mL Água Azul sem gás.',14.00,200,'S'),
+(14,'Copo Descartável 48un','Caixa com 48 copos descartáveis.',38.00,0,'S'),
+(15,'Galão Vazio 20L','Vasilhame vazio de 20 litros para troca.',11.00,100,'S'),
+(16,'Água Copo 200mL C/48','Fardo com 48 copos de água 200mL Igarapé.',40.00,2,'S'),
+(17,'Regulador de Gás NS05C10','Regulador de gás sem manômetro, modelo NS05C10, 1kg.',50.00,40,'S'),
+(18,'Regulador de Gás ALIAS04C10','Regulador de gás sem manômetro, modelo ALIAS04C10, 1kg.',50.00,20,'S'),
+(19,'Mangueira 3/8\"','Mangueira transparente 3/8\" tarja azul.',10.00,1,'S'),
+(20,'Abraçadeira 13–19mm','Abraçadeira RSF 13–19mm para mangueira de gás.',2.50,10,'S'),
+(21,'Água 500mL Tropical','Garrafa de água 500mL marca Tropical.',14.00,5,'S'),
+(22,'Água 500mL Pura da Serra','Água mineral 500mL sem gás marca Pura da Serra.',14.00,0,'S'),
+(23,'Água 1,5L Tropical','Garrafa de água 1,5L marca Tropical.',14.00,0,'S'),
+(24,'Água 1,5L Pura da Serra','Garrafa de água 1,5L da marca Pura da Serra.',14.00,0,'S'),
+(25,'Água 1,5L Com Gás','Garrafa de água 1,5L Igarapé com gás.',22.00,0,'S'),
+(26,'Água PET 500mL C/6','Pacote com 6 unidades de água 500mL Igarapé sem gás.',16.00,80,'S'),
+(27,'Garrafão PP','Vasilhame de garrafão tipo PP para água.',20.00,1541,'S'),
+(28,'Água 1,5L Água Azul','Garrafa de água 1,5L marca Água Azul.',14.00,0,'S'),
+(29,'Água Igarapé 10L','Água mineral Igarapé em garrafa PET de 10 litros.',16.00,10,'S');
 --
 -- Tabela `pedido`
 --
