@@ -52,7 +52,7 @@ pages.forEach(({ path, redirect, file, title }) => {
   }
 });
 
-// ===== ROTAS API (usando Controllers com padrão DAO) =====
+// ===== ROTAS API  =====
 app.post('/api/login', AuthController.login);
 app.get('/api/usuarios', UserController.getAll);
 app.put('/api/usuarios/:id/role', UserController.updateRole);
@@ -64,9 +64,11 @@ app.get('/api/clientes/:telefone', ClientController.getByPhone);
 app.post('/api/clientes', ClientController.create);
 app.put('/api/clientes/:id', ClientController.update);
 app.delete('/api/clientes/:id', ClientController.remove);
+
 // Telefones
 app.get('/api/clientes/:id/telefones', ClientController.listPhones);
 app.post('/api/clientes/:id/telefones', ClientController.addPhone);
+
 // Endereços
 app.get('/api/clientes/:id/enderecos', ClientController.listAddresses);
 app.post('/api/clientes/:id/enderecos', ClientController.addAddress);
@@ -74,6 +76,7 @@ app.put('/api/clientes/:id/enderecos/:enderecoId', ClientController.updateAddres
 app.put('/api/clientes/:id/enderecos/:enderecoId/principal', ClientController.setPrimaryAddress);
 app.delete('/api/clientes/:id/enderecos/:enderecoId', ClientController.deleteAddress);
 app.get('/api/clientes/:id/pedidos', ClientController.getOrderHistory);
+
 // Produtos
 app.get('/api/produtos', ProductController.getAll);
 app.get('/api/produtos/admin', ProductController.getAllAdmin);
@@ -81,6 +84,7 @@ app.post('/api/produtos', ProductController.create);
 app.put('/api/produtos/:id', ProductController.update);
 app.post('/api/pedidos', OrderController.create);
 app.get('/api/atendimentos/:id/pedido', OrderController.getByAtendimento);
+
 // Pedidos (admin)
 app.get('/api/pedidos', OrderController.list);
 app.get('/api/pedidos/:id/detalhes', OrderController.getDetails);
