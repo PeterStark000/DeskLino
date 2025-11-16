@@ -31,7 +31,7 @@ DROP TABLE IF EXISTS `cliente`;
 CREATE TABLE `cliente` (
   `cod_cliente` smallint(6) NOT NULL,
   `nome` varchar(50) NOT NULL,
-  `email` varchar(75) NOT NULL,
+  `email` varchar(75) DEFAULT NULL,
   `tipo_cliente` char(2) NOT NULL,
   `observacoes` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`cod_cliente`),

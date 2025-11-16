@@ -144,10 +144,11 @@ class ClientRepository {
       const cod_cliente = maxClient[0].next_id;
 
       // 2. Insere Cliente
-      await txExecute(connection,
-        'INSERT INTO Cliente (cod_cliente, nome, email, tipo_cliente, observacoes) VALUES (?, ?, ?, ?, ?)',
-        [cod_cliente, name, email || `cliente${cod_cliente}@desklino.com`, tipo_cliente, notes || null]
-      );
+        const emailValue = email && email.trim() !== '' ? email : null;
+        await txExecute(connection,
+          'INSERT INTO Cliente (cod_cliente, nome, email, tipo_cliente, observacoes) VALUES (?, ?, ?, ?, ?)',
+          [cod_cliente, name, emailValue, tipo_cliente, notes || null]
+        );
 
       // 3. Insere Telefone
       const [maxTel] = await txQuery(connection, 'SELECT COALESCE(MAX(cod_telefone), 0) + 1 as next_id FROM Telefone');
