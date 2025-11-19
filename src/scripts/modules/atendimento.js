@@ -857,6 +857,9 @@ function applyOrderToUI(order) {
       if (cb) cb.checked = true;
       if (qty) qty.value = String(it.quantity || 1);
     });
+
+    // Disparar evento para atualizar o total do carrinho
+    knownContainer.dispatchEvent(new Event('change', { bubbles: true }));
   }
 
   // 2) Endereço: selecionar no select de endereços, se id estiver disponível
