@@ -1,4 +1,4 @@
-import { toast, setPendingToast } from './toast.js';
+import { setPendingToast, toast } from './toast.js';
 import { Utils } from './utils.js';
 
 export function initAtendimento() {
@@ -1027,9 +1027,10 @@ function openCallModal({ defaultPhone, route }) {
 
   phoneInput.addEventListener('input', inputHandler);
 
-  const close = () => {
+  const close = async () => {
     phoneInput.removeEventListener('input', inputHandler);
-    dialog.close();
+    await dialog.close();
+    toast.info('Operação cancelada.');
   };
 
   btnCancel.onclick = () => close();

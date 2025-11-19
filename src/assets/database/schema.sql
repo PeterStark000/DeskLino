@@ -13,7 +13,7 @@ USE `desklino`;
 DROP TABLE IF EXISTS `atendente`;
 CREATE TABLE `atendente` (
   `cod_atendente` smallint(6) NOT NULL AUTO_INCREMENT,
-  `nome` varchar(150) NOT NULL,
+  `nome` varchar(50) NOT NULL,
   `login` varchar(50) NOT NULL,
   `senha` varchar(255) NOT NULL,
   `tipo_usuario` varchar(10) NOT NULL DEFAULT 'atendente',
@@ -54,7 +54,7 @@ CREATE TABLE `atendimento` (
   PRIMARY KEY (`cod_atendimento`),
   KEY `cod_cliente` (`cod_cliente`),
   KEY `cod_atendente` (`cod_atendente`),
-  CONSTRAINT `atendimento_ibfk_1` FOREIGN KEY (`cod_cliente`) REFERENCES `cliente` (`cod_cliente`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `atendimento_ibfk_1` FOREIGN KEY (`cod_cliente`) REFERENCES `cliente` (`cod_cliente`) ON UPDATE CASCADE,
   CONSTRAINT `atendimento_ibfk_2` FOREIGN KEY (`cod_atendente`) REFERENCES `atendente` (`cod_atendente`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -77,12 +77,12 @@ CREATE TABLE `endereco_entrega` (
   `principal` char(1) NOT NULL,
   PRIMARY KEY (`cod_endereco`),
   KEY `cod_cliente` (`cod_cliente`),
-  CONSTRAINT `endereco_entrega_ibfk_1` FOREIGN KEY (`cod_cliente`) REFERENCES `cliente` (`cod_cliente`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `endereco_entrega_ibfk_1` FOREIGN KEY (`cod_cliente`) REFERENCES `cliente` (`cod_cliente`) ON UPDATE CASCADE,
   CONSTRAINT `CONSTRAINT_1_ENDERECO` CHECK (`principal` in ('S','N'))
 ) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Inserção de dados na tabela `endereco_entrega`
-INSERT INTO `endereco_entrega` VALUES (1,'Casa','Rua das Flores','123',NULL,'Centro','Casa azul, portão branco',1,'S'),(2,'Trabalho','Av. Paulista','1500','Sala 801','Bela Vista','Próximo ao metrô',1,'N'),(3,'Residência','Rua dos Lírios','89',NULL,'Jardim Primavera','Perto da praça',2,'S'),(4,'Obra Central','Rua do Concreto','500',NULL,'Industrial','Depósito 2',3,'S'),(5,'Filial Curitiba','Av. Paraná','2345','Galpão B','Boa Vista','Próximo ao posto',4,'S'),(6,'Apartamento','Rua Bela Vista','101','Ap 23','Centro','Próximo ao mercado',5,'S'),(7,'Loja Matriz','Rua do Pão','45',NULL,'Vila Nova','Em frente à escola',6,'S'),(8,'Filial Zona Sul','Av. Santo Amaro','1900',NULL,'Santo Amaro','Próximo ao shopping',6,'N'),(9,'Casa','Rua das Palmeiras','222',NULL,'Jardim das Rosas','Casa amarela',7,'S'),(10,'Restaurante','Av. das Nações','678',NULL,'Centro','Ao lado do banco',8,'S'),(11,'Obra Secundária','Rua dos Tijolos','700',NULL,'Industrial','Portão azul',3,'N'),(12,'Residência','Rua do Sol','99',NULL,'Santa Luzia','Próximo à praça',9,'S'),(13,'Posto Central','Av. Brasil','5000',NULL,'Centro','Depósito lateral',10,'S'),(14,'Apartamento','Rua das Oliveiras','34','Bloco C Ap 14','Jardim Botânico','Perto da academia',11,'S'),(15,'Galpão Industrial','Rua das Máquinas','400',NULL,'Distrito Norte','Depósito principal',12,'S'),(16,'Casa','Rua do Bosque','82',NULL,'Vila Verde','Frente ao ponto de ônibus',13,'S'),(17,'Mercado Central','Av. Getúlio Vargas','210',NULL,'Centro','Ao lado da farmácia',14,'S'),(18,'Filial Norte','Rua Amazonas','150',NULL,'Jardim América','Perto do posto',14,'N'),(19,'Residência','Rua das Hortênsias','75',NULL,'Vila Bela','Casa com portão cinza',15,'S'),(20,'Casa de Praia','Av. Atlântica','321',NULL,'Beira Mar','Em frente à barraca Sol Nascente',15,'N'),(21,'Casa','Rua Botafogo','S/N',NULL,'Major Prates','Em frente a Minas Brasil',16,'S'),(22,'Principal','Rua 2','S/N',NULL,'Major',NULL,17,'N'),(23,'Casa da Avó','Rua Sebastião Campos','540','Apartamento','Nova Londres','Em frente ao salão de festas Oh Bah',17,'S'),(25,'Principal','Rua Unimontes','S/N',NULL,'Rocinha','Favela',18,'S'),(26,'Principal','Rua Macaco Prego','S/N',NULL,'Zoologico','Muro alto, porta de ferro.',19,'S');
+INSERT INTO `endereco_entrega` VALUES (1,'Casa','Rua das Flores','123',NULL,'Centro','Casa azul, portão branco',1,'S'),(2,'Trabalho','Av. Paulista','1500','Sala 801','Bela Vista','Próximo ao metrô',1,'N'),(3,'Residência','Rua dos Lírios','89',NULL,'Jardim Primavera','Perto da praça',2,'S'),(4,'Obra Central','Rua do Concreto','500',NULL,'Industrial','Depósito 2',3,'S'),(5,'Filial Curitiba','Av. Paraná','2345','Galpão B','Boa Vista','Próximo ao posto',4,'S'),(6,'Apartamento','Rua Bela Vista','101','Ap 23','Centro','Próximo ao mercado',5,'S'),(7,'Loja Matriz','Rua do Pão','45',NULL,'Vila Nova','Em frente à escola',6,'S'),(8,'Filial Zona Sul','Av. Santo Amaro','1900',NULL,'Santo Amaro','Próximo ao shopping',6,'N'),(9,'Casa','Rua das Palmeiras','222',NULL,'Jardim das Rosas','Casa amarela',7,'S'),(10,'Restaurante','Av. das Nações','678',NULL,'Centro','Ao lado do banco',8,'S'),(11,'Obra Secundária','Rua dos Tijolos','700',NULL,'Industrial','Portão azul',3,'N'),(12,'Residência','Rua do Sol','99',NULL,'Santa Luzia','Próximo à praça',9,'S'),(13,'Posto Central','Av. Brasil','5000',NULL,'Centro','Depósito lateral',10,'S'),(14,'Apartamento','Rua das Oliveiras','34','Bloco C Ap 14','Jardim Botânico','Perto da academia',11,'S'),(15,'Galpão Industrial','Rua das Máquinas','400',NULL,'Distrito Norte','Depósito principal',12,'S'),(16,'Casa','Rua do Bosque','82',NULL,'Vila Verde','Frente ao ponto de ônibus',13,'S'),(17,'Mercado Central','Av. Getúlio Vargas','210',NULL,'Centro','Ao lado da farmácia',14,'S'),(18,'Filial Norte','Rua Amazonas','150',NULL,'Jardim América','Perto do posto',14,'N'),(19,'Residência','Rua das Hortênsias','75',NULL,'Vila Bela','Casa com portão cinza',15,'S'),(20,'Casa de Praia','Av. Atlântica','321',NULL,'Beira Mar','Em frente à barraca Sol Nascente',15,'N'),(21,'Casa','Rua Botafogo','S/N',NULL,'Major Prates','Em frente a Minas Brasil',16,'S'),(22,'Principal','Rua 2','S/N',NULL,'Major',NULL,17,'N'),(23,'Casa da Avó','Rua Sebastião Campos','540','Apartamento','Nova Londres','Em frente ao salão de festas Oh Bah',17,'S'),(25,'Principal','Rua Santa Lúcia','S/N',NULL,'Todos os Santos','Apartamento',18,'S'),(26,'Principal','Rua Limeira Prego','S/N',NULL,'Morinhos','Muro alto, porta de ferro.',19,'S');
 
 --
 -- Tabela `produto`
@@ -145,12 +145,12 @@ CREATE TABLE `pedido` (
   PRIMARY KEY (`cod_pedido`),
   KEY `cod_atendimento` (`cod_atendimento`),
   KEY `cod_endereco` (`cod_endereco`),
-  CONSTRAINT `pedido_ibfk_1` FOREIGN KEY (`cod_atendimento`) REFERENCES `atendimento` (`cod_atendimento`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `pedido_ibfk_1` FOREIGN KEY (`cod_atendimento`) REFERENCES `atendimento` (`cod_atendimento`) ON UPDATE CASCADE,
   CONSTRAINT `pedido_ibfk_2` FOREIGN KEY (`cod_endereco`) REFERENCES `endereco_entrega` (`cod_endereco`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Inserção de dados na tabela `pedido`
-INSERT INTO `pedido` VALUES (1,'2025-11-13 22:48:55','Entregue','Dinheiro',1415.00,NULL,1,1),(2,'2025-11-13 23:17:44','Entregue','Dinheiro',413.00,NULL,2,1),(3,'2025-11-13 23:23:01','Entregue','Dinheiro',16.00,'O cliente gosta de atender os entregadores de calcinha, favor dar uma comida.',3,21),(4,'2025-11-14 00:18:40','Entregue','Dinheiro',895.00,NULL,4,1),(5,'2025-11-14 00:19:46','Entregue','Dinheiro',0.00,NULL,5,1),(6,'2025-11-14 00:21:19','Entregue','Dinheiro',48.00,'Teste',6,1),(7,'2025-11-14 00:41:01','Entregue','Dinheiro',293.00,NULL,7,22),(8,'2025-11-14 01:11:49','Entregue','Dinheiro',36.00,NULL,8,22),(9,'2025-11-14 02:21:05','Entregue','Dinheiro',600.00,'Pitbul bravo',9,25),(10,'2025-11-14 02:56:39','Entregue','Dinheiro',48.00,NULL,10,1),(11,'2025-11-14 03:07:06','Entregue','Dinheiro',460.00,'Prefere troco para 100 reais.',11,26),(12,'2025-11-14 19:12:58','Entregue','Dinheiro',28.00,NULL,12,1),(13,'2025-11-14 19:13:24','Entregue','Dinheiro',154.00,NULL,13,1),(14,'2025-11-14 19:53:28','Pendente','Dinheiro',2.50,'Entregar urgentemente.',14,1);
+INSERT INTO `pedido` VALUES (1,'2025-11-13 22:48:55','Entregue','Dinheiro',1415.00,NULL,1,1),(2,'2025-11-13 23:17:44','Entregue','Dinheiro',413.00,NULL,2,1),(3,'2025-11-13 23:23:01','Entregue','Dinheiro',16.00,'O cliente possui dificuldade de locomoção.',3,21),(4,'2025-11-14 00:18:40','Entregue','Dinheiro',895.00,NULL,4,1),(5,'2025-11-14 00:19:46','Entregue','Dinheiro',0.00,NULL,5,1),(6,'2025-11-14 00:21:19','Entregue','Dinheiro',48.00,'Teste',6,1),(7,'2025-11-14 00:41:01','Entregue','Dinheiro',293.00,NULL,7,22),(8,'2025-11-14 01:11:49','Entregue','Dinheiro',36.00,NULL,8,22),(9,'2025-11-14 02:21:05','Entregue','Dinheiro',600.00,'Pitbul bravo',9,25),(10,'2025-11-14 02:56:39','Entregue','Dinheiro',48.00,NULL,10,1),(11,'2025-11-14 03:07:06','Entregue','Dinheiro',460.00,'Prefere troco para 100 reais.',11,26),(12,'2025-11-14 19:12:58','Entregue','Dinheiro',28.00,NULL,12,1),(13,'2025-11-14 19:13:24','Entregue','Dinheiro',154.00,NULL,13,1),(14,'2025-11-14 19:53:28','Pendente','Dinheiro',2.50,'Entregar urgentemente.',14,1);
 
 --
 -- Tabela `item_pedido`
@@ -162,7 +162,7 @@ CREATE TABLE `item_pedido` (
   `quantidade` smallint(6) NOT NULL,
   PRIMARY KEY (`cod_pedido`,`cod_produto`),
   KEY `cod_produto` (`cod_produto`),
-  CONSTRAINT `item_pedido_ibfk_1` FOREIGN KEY (`cod_pedido`) REFERENCES `pedido` (`cod_pedido`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `item_pedido_ibfk_1` FOREIGN KEY (`cod_pedido`) REFERENCES `pedido` (`cod_pedido`) ON UPDATE CASCADE,
   CONSTRAINT `item_pedido_ibfk_2` FOREIGN KEY (`cod_produto`) REFERENCES `produto` (`cod_produto`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -178,7 +178,7 @@ CREATE TABLE `pessoa_fisica` (
   `cpf` char(11) NOT NULL,
   PRIMARY KEY (`cod_cliente`),
   UNIQUE KEY `cpf` (`cpf`),
-  CONSTRAINT `pessoa_fisica_ibfk_1` FOREIGN KEY (`cod_cliente`) REFERENCES `cliente` (`cod_cliente`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `pessoa_fisica_ibfk_1` FOREIGN KEY (`cod_cliente`) REFERENCES `cliente` (`cod_cliente`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Inserção de dados na tabela `pessoa_fisica`
@@ -193,7 +193,7 @@ CREATE TABLE `pessoa_juridica` (
   `cnpj` char(14) NOT NULL,
   PRIMARY KEY (`cod_cliente`),
   UNIQUE KEY `cnpj` (`cnpj`),
-  CONSTRAINT `pessoa_juridica_ibfk_1` FOREIGN KEY (`cod_cliente`) REFERENCES `cliente` (`cod_cliente`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `pessoa_juridica_ibfk_1` FOREIGN KEY (`cod_cliente`) REFERENCES `cliente` (`cod_cliente`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Inserção de dados na tabela `pessoa_juridica`
@@ -210,7 +210,7 @@ CREATE TABLE `telefone` (
   PRIMARY KEY (`cod_telefone`),
   UNIQUE KEY `numero` (`numero`),
   KEY `cod_cliente` (`cod_cliente`),
-  CONSTRAINT `telefone_ibfk_1` FOREIGN KEY (`cod_cliente`) REFERENCES `cliente` (`cod_cliente`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `telefone_ibfk_1` FOREIGN KEY (`cod_cliente`) REFERENCES `cliente` (`cod_cliente`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Inserção de dados na tabela `telefone`
