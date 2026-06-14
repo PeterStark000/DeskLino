@@ -403,13 +403,34 @@ BEGIN
     WHERE cod_produto = NEW.cod_produto;
 END$$
 
-CREATE TRIGGER trg_item_pedido_devolucao_estoque
-AFTER DELETE ON item_pedido
+CREATE TRIGGER trg_pedido_status_estoque
+BEFORE UPDATE ON pedido
 FOR EACH ROW
 BEGIN
-    UPDATE produto
-    SET qtde_estoque = qtde_estoque + OLD.quantidade
-    WHERE cod_produto = OLD.cod_produto;
+    IF OLD.status != NEW.status THEN
+        IF NEW.status = 'Cancelado' AND OLD.status != 'Cancelado' THEN
+            UPDATE produto pr
+            INNER JOIN item_pedido ip ON ip.cod_produto = pr.cod_produto
+            SET pr.qtde_estoque = pr.qtde_estoque + ip.quantidade
+            WHERE ip.cod_pedido = OLD.cod_pedido;
+        ELSEIF OLD.status = 'Cancelado' AND NEW.status != 'Cancelado' THEN
+            IF EXISTS (
+                SELECT 1
+                FROM item_pedido ip
+                INNER JOIN produto pr ON pr.cod_produto = ip.cod_produto
+                WHERE ip.cod_pedido = OLD.cod_pedido
+                  AND pr.qtde_estoque < ip.quantidade
+            ) THEN
+                SIGNAL SQLSTATE '45000'
+                    SET MESSAGE_TEXT = 'Estoque insuficiente para reativar o pedido';
+            END IF;
+
+            UPDATE produto pr
+            INNER JOIN item_pedido ip ON ip.cod_produto = pr.cod_produto
+            SET pr.qtde_estoque = pr.qtde_estoque - ip.quantidade
+            WHERE ip.cod_pedido = OLD.cod_pedido;
+        END IF;
+    END IF;
 END$$
 
 CREATE TRIGGER trg_item_pedido_ajusta_estoque
