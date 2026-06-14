@@ -39,27 +39,7 @@ class ClientRepository {
    * Busca cliente por ID
    */
   static async findById(id) {
-    const sql = `
-      SELECT 
-        c.cod_cliente as id,
-        c.nome as name,
-        c.email,
-        c.tipo_cliente,
-        c.observacoes as notes,
-        (SELECT t.numero FROM Telefone t WHERE t.cod_cliente = c.cod_cliente LIMIT 1) as phone,
-        pf.cpf, 
-        pj.cnpj,
-        e.logradouro as address, 
-        e.numero as number, 
-        e.complemento, 
-        e.bairro, 
-        e.ponto_ref as ref
-      FROM Cliente c
-      LEFT JOIN Pessoa_Fisica pf ON pf.cod_cliente = c.cod_cliente
-      LEFT JOIN Pessoa_Juridica pj ON pj.cod_cliente = c.cod_cliente
-      LEFT JOIN Endereco_Entrega e ON e.cod_cliente = c.cod_cliente AND e.principal = 'S'
-      WHERE c.cod_cliente = ?
-    `;
+    const sql = `SELECT * FROM vw_cliente_completo WHERE id = ?`;
     const rows = await query(sql, [id]);
     return rows[0] || null;
   }
@@ -69,30 +49,7 @@ class ClientRepository {
    */
   static async search(searchTerm) {
     const term = `%${searchTerm}%`;
-    const sql = `
-      SELECT 
-        c.cod_cliente as id,
-        c.nome as name,
-        c.email,
-        c.tipo_cliente,
-        c.observacoes as notes,
-        (SELECT t.numero FROM Telefone t WHERE t.cod_cliente = c.cod_cliente ORDER BY t.cod_telefone LIMIT 1) as phone,
-        (SELECT GROUP_CONCAT(t.numero ORDER BY t.cod_telefone SEPARATOR ', ') FROM Telefone t WHERE t.cod_cliente = c.cod_cliente) as phones,
-        e.logradouro as address,
-        e.numero as number,
-        e.complemento,
-        e.bairro,
-        e.ponto_ref as ref,
-        pf.cpf,
-        pj.cnpj
-      FROM Cliente c
-      LEFT JOIN Endereco_Entrega e ON c.cod_cliente = e.cod_cliente AND e.principal = 'S'
-      LEFT JOIN Pessoa_Fisica pf ON c.cod_cliente = pf.cod_cliente
-      LEFT JOIN Pessoa_Juridica pj ON c.cod_cliente = pj.cod_cliente
-      WHERE c.nome LIKE ? OR c.email LIKE ?
-      ORDER BY c.nome ASC
-      LIMIT 10
-    `;
+    const sql = `SELECT * FROM vw_cliente_completo WHERE name LIKE ? OR email LIKE ?`;
     return await query(sql, [term, term]);
   }
 
@@ -102,29 +59,27 @@ class ClientRepository {
   static async list({ page = 1, pageSize = 20, search = '' }) {
     const offset = (page - 1) * pageSize;
     const term = `%${search}%`;
-    const where = search ? 'WHERE c.nome LIKE ? OR c.email LIKE ?' : '';
+    const where = search ? 'WHERE name LIKE ? OR email LIKE ?' : '';
     const params = search ? [term, term, pageSize, offset] : [pageSize, offset];
 
     const sql = `
       SELECT 
-        c.cod_cliente as id,
-        c.nome as name,
-        c.email,
-        c.tipo_cliente,
-        c.observacoes as notes,
-        pf.cpf, 
-        pj.cnpj,
-        (SELECT t.numero FROM Telefone t WHERE t.cod_cliente = c.cod_cliente LIMIT 1) as phone
-      FROM Cliente c
-      LEFT JOIN Pessoa_Fisica pf ON pf.cod_cliente = c.cod_cliente
-      LEFT JOIN Pessoa_Juridica pj ON pj.cod_cliente = c.cod_cliente
+        id,
+        name,
+        email,
+        tipo_cliente,
+        notes,
+        cpf,
+        cnpj,
+        phone
+      FROM vw_cliente_completo
       ${where}
-      ORDER BY c.cod_cliente DESC
+      ORDER BY id DESC
       LIMIT ? OFFSET ?
     `;
     const rows = await query(sql, params);
 
-    const countSql = `SELECT COUNT(*) as total FROM Cliente c ${where}`;
+    const countSql = `SELECT COUNT(*) as total FROM vw_cliente_completo ${where}`;
     const countParams = search ? [term, term] : [];
     const totalRows = await query(countSql, countParams);
     const total = totalRows[0]?.total || 0;

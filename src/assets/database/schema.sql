@@ -215,3 +215,149 @@ CREATE TABLE `telefone` (
 
 -- Inserção de dados na tabela `telefone`
 INSERT INTO `telefone` VALUES (1,1,'(11) 98765-4321'),(2,2,'(21) 98888-2222'),(3,3,'(31) 97777-3333'),(4,4,'(41) 96666-4444'),(5,5,'(11) 95555-1111'),(6,6,'(11) 98877-5555'),(7,7,'(21) 91234-8888'),(8,8,'(21) 97777-9999'),(9,9,'(31) 99876-3333'),(10,10,'(41) 92345-6666'),(11,11,'(61) 93456-7777'),(12,12,'(31) 94455-8888'),(13,13,'(11) 91122-3333'),(14,14,'(71) 92233-4444'),(15,15,'(85) 93344-5555'),(16,16,'(11) 9876-5159'),(17,1,'(38) 99985-1088'),(18,17,'(38) 99999-9999'),(19,18,'(38) 98998-9898'),(20,18,'(21) 99999-0000'),(21,19,'(21) 99999-0001'),(22,18,'(21) 99999-0020');
+
+--
+-- Índices e views otimizadas
+--
+CREATE INDEX idx_pedido_status_cod ON pedido (status, cod_pedido DESC);
+CREATE INDEX idx_pedido_data ON pedido (data_pedido);
+CREATE INDEX idx_endereco_cliente_principal ON endereco_entrega (cod_cliente, principal);
+
+CREATE OR REPLACE VIEW vw_cliente_completo AS
+SELECT
+    c.cod_cliente AS id,
+    c.nome AS name,
+    c.email,
+    c.tipo_cliente,
+    c.observacoes AS notes,
+    COALESCE(pf.cpf, '') AS cpf,
+    COALESCE(pj.cnpj, '') AS cnpj,
+    t.numero AS phone,
+    e.cod_endereco AS address_id,
+    e.nome_end AS address_name,
+    e.logradouro AS address,
+    e.numero AS number,
+    e.complemento,
+    e.bairro,
+    e.ponto_ref AS ref
+FROM cliente c
+LEFT JOIN pessoa_fisica pf ON pf.cod_cliente = c.cod_cliente
+LEFT JOIN pessoa_juridica pj ON pj.cod_cliente = c.cod_cliente
+LEFT JOIN telefone t ON t.cod_cliente = c.cod_cliente
+    AND t.cod_telefone = (
+      SELECT MIN(t2.cod_telefone)
+      FROM telefone t2
+      WHERE t2.cod_cliente = c.cod_cliente
+    )
+LEFT JOIN endereco_entrega e ON e.cod_cliente = c.cod_cliente
+    AND e.principal = 'S';
+
+CREATE OR REPLACE VIEW vw_pedido_resumo AS
+SELECT
+    p.cod_pedido AS id,
+    p.data_pedido AS created_at,
+    p.status,
+    p.forma_pag AS payment_method,
+    p.valor_total,
+    p.observacao AS notes,
+    p.cod_atendimento AS atendimento_id,
+    a.cod_cliente AS client_id,
+    c.nome AS client_name,
+    c.tipo_cliente,
+    e.cod_endereco AS address_id,
+    e.logradouro,
+    e.numero AS address_number,
+    e.complemento,
+    e.bairro,
+    e.ponto_ref
+FROM pedido p
+INNER JOIN atendimento a ON a.cod_atendimento = p.cod_atendimento
+INNER JOIN cliente c ON c.cod_cliente = a.cod_cliente
+INNER JOIN endereco_entrega e ON e.cod_endereco = p.cod_endereco;
+
+CREATE OR REPLACE VIEW vw_itens_pedido AS
+SELECT
+    ip.cod_pedido,
+    ip.cod_produto,
+    pr.nome AS product,
+    ip.quantidade AS quantity,
+    pr.valor AS unit_price,
+    (ip.quantidade * pr.valor) AS subtotal
+FROM item_pedido ip
+INNER JOIN produto pr ON pr.cod_produto = ip.cod_produto;
+
+DELIMITER $$
+
+CREATE TRIGGER trg_item_pedido_baixa_estoque
+AFTER INSERT ON item_pedido
+FOR EACH ROW
+BEGIN
+    UPDATE produto
+    SET qtde_estoque = GREATEST(0, qtde_estoque - NEW.quantidade)
+    WHERE cod_produto = NEW.cod_produto;
+END$$
+
+CREATE TRIGGER trg_item_pedido_devolucao_estoque
+AFTER DELETE ON item_pedido
+FOR EACH ROW
+BEGIN
+    UPDATE produto
+    SET qtde_estoque = qtde_estoque + OLD.quantidade
+    WHERE cod_produto = OLD.cod_produto;
+END$$
+
+CREATE TRIGGER trg_item_pedido_ajusta_estoque
+AFTER UPDATE ON item_pedido
+FOR EACH ROW
+BEGIN
+    DECLARE delta INT;
+    SET delta = NEW.quantidade - OLD.quantidade;
+
+    UPDATE produto
+    SET qtde_estoque = GREATEST(0, qtde_estoque - delta)
+    WHERE cod_produto = NEW.cod_produto;
+END$$
+
+CREATE TRIGGER trg_recalcula_total_insert
+AFTER INSERT ON item_pedido
+FOR EACH ROW
+BEGIN
+    UPDATE pedido
+    SET valor_total = (
+        SELECT COALESCE(SUM(pr.valor * ip.quantidade), 0)
+        FROM item_pedido ip
+        INNER JOIN produto pr ON pr.cod_produto = ip.cod_produto
+        WHERE ip.cod_pedido = NEW.cod_pedido
+    )
+    WHERE cod_pedido = NEW.cod_pedido;
+END$$
+
+CREATE TRIGGER trg_recalcula_total_update
+AFTER UPDATE ON item_pedido
+FOR EACH ROW
+BEGIN
+    UPDATE pedido
+    SET valor_total = (
+        SELECT COALESCE(SUM(pr.valor * ip.quantidade), 0)
+        FROM item_pedido ip
+        INNER JOIN produto pr ON pr.cod_produto = ip.cod_produto
+        WHERE ip.cod_pedido = NEW.cod_pedido
+    )
+    WHERE cod_pedido = NEW.cod_pedido;
+END$$
+
+CREATE TRIGGER trg_recalcula_total_delete
+AFTER DELETE ON item_pedido
+FOR EACH ROW
+BEGIN
+    UPDATE pedido
+    SET valor_total = (
+        SELECT COALESCE(SUM(pr.valor * ip.quantidade), 0)
+        FROM item_pedido ip
+        INNER JOIN produto pr ON pr.cod_produto = ip.cod_produto
+        WHERE ip.cod_pedido = OLD.cod_pedido
+    )
+    WHERE cod_pedido = OLD.cod_pedido;
+END$$
+
+DELIMITER ;

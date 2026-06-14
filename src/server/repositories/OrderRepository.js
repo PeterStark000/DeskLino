@@ -10,20 +10,15 @@ class OrderRepository {
   static async findByClient(clientId) {
     const sql = `
       SELECT 
-        p.cod_pedido as id,
-        p.cod_atendimento as atendimento_id,
-        p.data_pedido as created_at,
-        p.status,
-        p.forma_pag as payment_method,
-        p.observacao as notes,
-        GROUP_CONCAT(CONCAT(pr.nome, ' (', ip.quantidade, 'x)') SEPARATOR ', ') as products
-      FROM Pedido p
-      INNER JOIN Atendimento at ON p.cod_atendimento = at.cod_atendimento
-      LEFT JOIN Item_Pedido ip ON p.cod_pedido = ip.cod_pedido
-      LEFT JOIN Produto pr ON ip.cod_produto = pr.cod_produto
-      WHERE at.cod_cliente = ?
-      GROUP BY p.cod_pedido
-      ORDER BY p.data_pedido DESC
+        v.*,
+        (
+          SELECT GROUP_CONCAT(CONCAT(i.product, ' (', i.quantity, 'x)') SEPARATOR ', ')
+          FROM vw_itens_pedido i
+          WHERE i.cod_pedido = v.id
+        ) as products
+      FROM vw_pedido_resumo v
+      WHERE v.client_id = ?
+      ORDER BY v.created_at DESC
       LIMIT 10
     `;
     return await query(sql, [clientId]);
@@ -34,21 +29,9 @@ class OrderRepository {
    */
   static async findByAtendimento(atendimentoId) {
     const orderSql = `
-      SELECT 
-        p.cod_pedido as id,
-        p.data_pedido as created_at,
-        p.status,
-        p.forma_pag as payment_method,
-        p.observacao as notes,
-        e.cod_endereco as address_id,
-        e.logradouro, 
-        e.numero, 
-        e.complemento, 
-        e.bairro, 
-        e.ponto_ref
-      FROM Pedido p
-      INNER JOIN Endereco_Entrega e ON p.cod_endereco = e.cod_endereco
-      WHERE p.cod_atendimento = ?
+      SELECT *
+      FROM vw_pedido_resumo
+      WHERE atendimento_id = ?
       LIMIT 1
     `;
     const orders = await query(orderSql, [atendimentoId]);
@@ -64,25 +47,9 @@ class OrderRepository {
    */
   static async findById(orderId) {
     const orderSql = `
-      SELECT 
-        p.cod_pedido as id,
-        p.data_pedido as created_at,
-        p.status,
-        p.forma_pag as payment_method,
-        p.observacao as notes,
-        p.valor_total,
-        e.logradouro, 
-        e.numero, 
-        e.complemento, 
-        e.bairro, 
-        e.ponto_ref,
-        c.cod_cliente as client_id,
-        c.nome as client_name
-      FROM Pedido p
-      INNER JOIN Endereco_Entrega e ON p.cod_endereco = e.cod_endereco
-      INNER JOIN Atendimento a ON a.cod_atendimento = p.cod_atendimento
-      INNER JOIN Cliente c ON c.cod_cliente = a.cod_cliente
-      WHERE p.cod_pedido = ?
+      SELECT *
+      FROM vw_pedido_resumo
+      WHERE id = ?
       LIMIT 1
     `;
     const orders = await query(orderSql, [orderId]);
@@ -102,15 +69,15 @@ class OrderRepository {
     const params = [];
 
     if (clientId) {
-      filters.push('c.cod_cliente = ?');
+      filters.push('v.client_id = ?');
       params.push(clientId);
     }
     if (status) {
-      filters.push('p.status = ?');
+      filters.push('v.status = ?');
       params.push(status);
     }
     if (search) {
-      filters.push('(c.nome LIKE ? OR EXISTS (SELECT 1 FROM Telefone t WHERE t.cod_cliente = c.cod_cliente AND t.numero LIKE ?))');
+      filters.push('(v.client_name LIKE ? OR EXISTS (SELECT 1 FROM Telefone t WHERE t.cod_cliente = v.client_id AND t.numero LIKE ?))');
       const term = `%${search}%`;
       params.push(term, term);
     }
@@ -118,29 +85,19 @@ class OrderRepository {
     const where = filters.length ? `WHERE ${filters.join(' AND ')}` : '';
 
     const sql = `
-      SELECT 
-        p.cod_pedido as id,
-        p.data_pedido as created_at,
-        p.status,
-        p.forma_pag as payment_method,
-        p.valor_total as valor_total,
-        c.cod_cliente as client_id,
-        c.nome as client_name,
-        (SELECT t.numero FROM Telefone t WHERE t.cod_cliente = c.cod_cliente ORDER BY t.cod_telefone LIMIT 1) as phone
-      FROM Pedido p
-      INNER JOIN Atendimento a ON p.cod_atendimento = a.cod_atendimento
-      INNER JOIN Cliente c ON a.cod_cliente = c.cod_cliente
+      SELECT
+        v.*,
+        (SELECT t.numero FROM Telefone t WHERE t.cod_cliente = v.client_id ORDER BY t.cod_telefone LIMIT 1) as phone
+      FROM vw_pedido_resumo v
       ${where}
-      ORDER BY p.cod_pedido DESC
+      ORDER BY id DESC
       LIMIT ? OFFSET ?
     `;
     const rows = await query(sql, [...params, pageSize, offset]);
 
     const countSql = `
       SELECT COUNT(*) as total
-      FROM Pedido p
-      INNER JOIN Atendimento a ON p.cod_atendimento = a.cod_atendimento
-      INNER JOIN Cliente c ON a.cod_cliente = c.cod_cliente
+      FROM vw_pedido_resumo v
       ${where}
     `;
     const totalRows = await query(countSql, params);
@@ -213,11 +170,6 @@ class OrderRepository {
           'INSERT INTO Item_Pedido (cod_pedido, cod_produto, quantidade) VALUES (?, ?, ?)',
           [cod_pedido, it.cod_produto, it.quantity]
         );
-
-        await txExecute(connection,
-          'UPDATE Produto SET qtde_estoque = CASE WHEN qtde_estoque >= ? THEN qtde_estoque - ? ELSE 0 END WHERE cod_produto = ?',
-          [it.quantity, it.quantity, it.cod_produto]
-        );
       }
 
       return cod_pedido;
@@ -238,10 +190,9 @@ class OrderRepository {
    */
   static async recalculateTotal(orderId) {
     const totalRows = await query(
-      `SELECT COALESCE(SUM(pr.valor * ip.quantidade), 0) as total
-       FROM Item_Pedido ip
-       INNER JOIN Produto pr ON pr.cod_produto = ip.cod_produto
-       WHERE ip.cod_pedido = ?`,
+      `SELECT COALESCE(SUM(subtotal), 0) as total
+       FROM vw_itens_pedido
+       WHERE cod_pedido = ?`,
       [orderId]
     );
 
@@ -257,12 +208,12 @@ class OrderRepository {
   static async _getOrderItems(orderId) {
     const sql = `
       SELECT 
-        pr.nome as product, 
-        ip.quantidade as quantity, 
-        pr.valor as price
-      FROM Item_Pedido ip
-      INNER JOIN Produto pr ON pr.cod_produto = ip.cod_produto
-      WHERE ip.cod_pedido = ?
+        product, 
+        quantity, 
+        unit_price as price,
+        subtotal
+      FROM vw_itens_pedido
+      WHERE cod_pedido = ?
     `;
     return await query(sql, [orderId]);
   }
