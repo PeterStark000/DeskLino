@@ -51,6 +51,25 @@ function paginate(list) {
   return list.slice(start, start + state.pageSize);
 }
 
+function getExpiryStatus(expiryDate) {
+  if (!expiryDate) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const parts = (typeof expiryDate === 'string' ? expiryDate : '').split('T')[0].split('-');
+  const expiry = parts.length === 3 ? new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])) : new Date(expiryDate);
+  const diffDays = Math.round((expiry - today) / (1000 * 60 * 60 * 24));
+  if (diffDays < 0) return 'expired';
+  if (diffDays <= 30) return 'warning';
+  return 'ok';
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '—';
+  const parts = (typeof dateStr === 'string' ? dateStr : '').split('T')[0].split('-');
+  if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  return new Date(dateStr).toLocaleDateString('pt-BR');
+}
+
 function render() {
   const tbody = document.querySelector('#admin-products-body');
   const summary = document.querySelector('#admin-products-summary');
@@ -69,6 +88,10 @@ function render() {
     else if (state.sortBy === 'available') { 
       aVal = (a.available === 'S' || a.available === true) ? 1 : 0; 
       bVal = (b.available === 'S' || b.available === true) ? 1 : 0;
+    } else if (state.sortBy === 'expiry_date') {
+      aVal = a.expiry_date ? new Date(a.expiry_date).getTime() : Infinity;
+      bVal = b.expiry_date ? new Date(b.expiry_date).getTime() : Infinity;
+      return (aVal - bVal) * dir;
     }
     
     if (typeof aVal === 'number') return (aVal - bVal) * dir;
@@ -79,26 +102,54 @@ function render() {
     const disponivel = p.available === 'S' || p.available === true || p.available === 'true';
     const estoque = Number(p.stock ?? 0);
     const valor = Number(p.price ?? 0);
-    const alertIcon = (disponivel && estoque === 0) ? '<span title="Disponível mas sem estoque!" class="inline-flex items-center mr-2 text-red-600">⚠️</span>' : '';
+    const expiryStatus = getExpiryStatus(p.expiry_date);
+
+    let alertIcon = '';
+    if (disponivel && estoque === 0) {
+      alertIcon += '<span title=\"Disponível mas sem estoque!\" class=\"inline-flex items-center mr-1 text-red-600\">⚠️</span>';
+    }
+    if (expiryStatus === 'expired') {
+      alertIcon += '<span title=\"Produto VENCIDO!\" class=\"inline-flex items-center mr-1 text-red-600\">🚫</span>';
+    } else if (expiryStatus === 'warning') {
+      alertIcon += '<span title=\"Produto próximo ao vencimento!\" class=\"inline-flex items-center mr-1 text-yellow-500\">⏰</span>';
+    }
+
+    let rowClass = 'border-t';
+    if (expiryStatus === 'expired') rowClass += ' bg-red-50';
+    else if (expiryStatus === 'warning') rowClass += ' bg-yellow-50';
+
+    let expiryBadge = '—';
+    if (p.expiry_date) {
+      const dateLabel = formatDate(p.expiry_date);
+      if (expiryStatus === 'expired') {
+        expiryBadge = `<span class=\"inline-flex items-center gap-1 text-xs px-2 py-1 rounded bg-red-100 text-red-700 font-semibold\">${dateLabel} · VENCIDO</span>`;
+      } else if (expiryStatus === 'warning') {
+        expiryBadge = `<span class=\"inline-flex items-center gap-1 text-xs px-2 py-1 rounded bg-yellow-100 text-yellow-700 font-semibold\">${dateLabel} · Próximo</span>`;
+      } else {
+        expiryBadge = `<span class=\"text-xs text-gray-600\">${dateLabel}</span>`;
+      }
+    }
+
     return `
-      <tr class="border-t">
-        <td class="p-2 text-gray-500">${p.id ?? ''}</td>
-        <td class="p-2">${alertIcon}${p.name ?? ''}</td>
-        <td class="p-2">${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor)}</td>
-        <td class="p-2">${estoque}</td>
-        <td class="p-2">
-          <span class="inline-flex items-center gap-1 text-xs px-2 py-1 rounded ${disponivel ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}">
+      <tr class=\"${rowClass}\">
+        <td class=\"p-2 text-gray-500\">${p.id ?? ''}</td>
+        <td class=\"p-2\">${alertIcon}${p.name ?? ''}</td>
+        <td class=\"p-2\">${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor)}</td>
+        <td class=\"p-2\">${estoque}</td>
+        <td class=\"p-2\">
+          <span class=\"inline-flex items-center gap-1 text-xs px-2 py-1 rounded ${disponivel ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}\">
             ${disponivel ? 'Disponível' : 'Indisponível'}
           </span>
         </td>
-        <td class="p-2">
-          <button class="px-2 py-1 text-blue-600 hover:underline" data-action="edit" data-id="${p.id}">Editar</button>
+        <td class=\"p-2\">${expiryBadge}</td>
+        <td class=\"p-2\">
+          <button class=\"px-2 py-1 text-blue-600 hover:underline\" data-action=\"edit\" data-id=\"${p.id}\">Editar</button>
         </td>
       </tr>
     `;
   }).join('');
 
-  tbody.innerHTML = rows || '<tr><td colspan="6" class="p-3 text-center text-gray-500">Nenhum produto encontrado.</td></tr>';
+  tbody.innerHTML = rows || '<tr><td colspan=\"7\" class=\"p-3 text-center text-gray-500\">Nenhum produto encontrado.</td></tr>';
 
   if (summary) {
     const total = state.filtered.length;
@@ -109,7 +160,6 @@ function render() {
   
   updateSortIndicators();
 }
-
 function bindTableActions() {
   const tbody = document.querySelector('#admin-products-body');
   if (!tbody) return;
@@ -159,6 +209,8 @@ function openModal(mode, product) {
   const valor = document.querySelector('#prod-valor');
   const estoque = document.querySelector('#prod-estoque');
   const disp = document.querySelector('#prod-disponivel');
+  const validade = document.querySelector('#prod-validade');
+  const validadeWarn = document.querySelector('#prod-validade-warn');
 
   state.editingId = mode === 'edit' ? (product?.id) : null;
 
@@ -168,6 +220,22 @@ function openModal(mode, product) {
   if (valor) valor.value = product?.price ?? '';
   if (estoque) estoque.value = product?.stock ?? '';
   if (disp) disp.checked = (product?.available === 'S' || product?.available === true);
+
+  // Preencher data de validade (formato YYYY-MM-DD para input[type=date])
+  if (validade) {
+    const raw = product?.expiry_date ?? '';
+    validade.value = raw ? raw.split('T')[0] : '';
+    // Mostrar aviso se já vencido
+    const status = getExpiryStatus(raw || null);
+    if (validadeWarn) validadeWarn.classList.toggle('hidden', status !== 'expired');
+    // Listener para atualizar aviso em tempo real
+    validade.oninput = () => {
+      const s = getExpiryStatus(validade.value || null);
+      if (validadeWarn) validadeWarn.classList.toggle('hidden', s !== 'expired');
+      // Se vencido, desmarcar disponível automaticamente
+      if (s === 'expired' && disp) disp.checked = false;
+    };
+  }
 
   if (dlg && !dlg.open) dlg.showModal();
 }
@@ -200,11 +268,17 @@ async function onSave() {
   const valorStr = document.querySelector('#prod-valor')?.value;
   const estoqueStr = document.querySelector('#prod-estoque')?.value;
   const disponivel = document.querySelector('#prod-disponivel')?.checked;
+  const data_validade = document.querySelector('#prod-validade')?.value || null;
 
   if (!nome) { toast.warn('Informe o nome.'); return; }
   const valor = Number(valorStr || 0);
   const qtde_estoque = Number(estoqueStr || 0);
-  const body = { nome, descricao, valor, qtde_estoque, disponivel: disponivel ? 'S' : 'N' };
+
+  // Se data vencida, forçar indisponível (validação adicional no frontend)
+  const expiryStatus = getExpiryStatus(data_validade);
+  const dispFinal = (expiryStatus === 'expired') ? false : disponivel;
+
+  const body = { nome, descricao, valor, qtde_estoque, disponivel: dispFinal ? 'S' : 'N', data_validade };
 
   try {
     if (state.editingId) {

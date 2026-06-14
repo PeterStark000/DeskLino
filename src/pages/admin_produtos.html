@@ -25,6 +25,7 @@
                 <th class="text-left p-3 font-semibold text-gray-600 cursor-pointer hover:bg-gray-100" data-sort="price">Valor <span class="sort-indicator"></span></th>
                 <th class="text-left p-3 font-semibold text-gray-600 cursor-pointer hover:bg-gray-100" data-sort="stock">Estoque <span class="sort-indicator"></span></th>
                 <th class="text-left p-3 font-semibold text-gray-600 cursor-pointer hover:bg-gray-100" data-sort="available">Disponível <span class="sort-indicator"></span></th>
+                <th class="text-left p-3 font-semibold text-gray-600 cursor-pointer hover:bg-gray-100" data-sort="expiry_date">Validade <span class="sort-indicator"></span></th>
                 <th class="text-left p-3 font-semibold text-gray-600">Ações</th>
               </tr>
             </thead>
@@ -65,6 +66,11 @@
           <label for="prod-estoque" class="block text-sm font-medium text-gray-700 mb-1">Estoque</label>
           <input id="prod-estoque" type="number" step="1" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
         </div>
+      </div>
+      <div>
+        <label for="prod-validade" class="block text-sm font-medium text-gray-700 mb-1">Data de Validade <span class="text-gray-400 font-normal">(opcional)</span></label>
+        <input id="prod-validade" type="date" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+        <p id="prod-validade-warn" class="hidden mt-1 text-xs text-red-600">⚠️ Este produto está vencido — será marcado como indisponível automaticamente.</p>
       </div>
       <div class="flex items-center gap-2">
         <input id="prod-disponivel" type="checkbox" class="rounded" />

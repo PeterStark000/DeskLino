@@ -909,6 +909,27 @@ async function loadProducts() {
   }
 }
 
+function getAtendimentoExpiryStatus(expiryDate) {
+  if (!expiryDate) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const parts = (typeof expiryDate === 'string' ? expiryDate : '').split('T')[0].split('-');
+  const expiry = parts.length === 3
+    ? new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]))
+    : new Date(expiryDate);
+  const diffDays = Math.round((expiry - today) / (1000 * 60 * 60 * 24));
+  if (diffDays < 0) return 'expired';
+  if (diffDays <= 30) return 'warning';
+  return 'ok';
+}
+
+function formatAtendimentoDate(dateStr) {
+  if (!dateStr) return '';
+  const parts = (typeof dateStr === 'string' ? dateStr : '').split('T')[0].split('-');
+  if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  return new Date(dateStr).toLocaleDateString('pt-BR');
+}
+
 function renderProductsInContainer(products, containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
@@ -917,13 +938,45 @@ function renderProductsInContainer(products, containerId) {
     const price = Number(product.price || 0);
     const stock = Number(product.stock || 0);
     const priceFormatted = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price);
+    const expiryStatus = getAtendimentoExpiryStatus(product.expiry_date || null);
+    const isExpired = expiryStatus === 'expired';
+    const isWarning = expiryStatus === 'warning';
+
+    // Rótulo e estilo de validade
+    let expiryLabel = '';
+    if (isExpired) {
+      expiryLabel = ` · <span class="text-red-600 font-semibold">VENCIDO (${formatAtendimentoDate(product.expiry_date)})</span>`;
+    } else if (isWarning) {
+      expiryLabel = ` · <span class="text-yellow-600 font-semibold">Vence em ${formatAtendimentoDate(product.expiry_date)}</span>`;
+    }
+
+    if (isExpired) {
+      // Produto vencido: desabilitar completamente, exibir como bloqueado
+      return `
+        <div class="flex items-center justify-between px-3 py-2 rounded-lg border border-red-200 bg-red-50 shadow-sm opacity-75 cursor-not-allowed" title="Produto vencido — não pode ser adicionado ao pedido">
+          <div class="flex items-center gap-2 flex-1">
+            <input type="checkbox" disabled class="product-checkbox w-5 h-5 flex-shrink-0 text-gray-300 bg-gray-100 border-gray-300 rounded cursor-not-allowed" data-price="${price}" data-stock="${stock}" />
+            <div class="flex-1 min-w-0">
+              <span class="text-sm font-medium text-red-700 block line-through">${product.name}</span>
+              <span class="text-xs text-red-500">${priceFormatted} | Estoque: ${stock}${expiryLabel}</span>
+            </div>
+          </div>
+          <span class="text-xs text-red-600 font-bold px-2 py-1 bg-red-100 rounded">🚫 Vencido</span>
+        </div>
+      `;
+    }
+
+    const wrapperClass = isWarning
+      ? 'flex items-center justify-between px-3 py-2 rounded-lg border border-yellow-300 bg-yellow-50 hover:bg-yellow-100 shadow-sm transition'
+      : 'flex items-center justify-between px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 shadow-sm transition';
+
     return `
-      <div class="flex items-center justify-between px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 shadow-sm transition">
+      <div class="${wrapperClass}">
         <div class="flex items-center gap-2 flex-1">
           <input type="checkbox" value="${product.name}" class="product-checkbox w-5 h-5 flex-shrink-0 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2" data-price="${price}" data-stock="${stock}" />
           <div class="flex-1 min-w-0">
             <span class="text-sm font-medium text-gray-800 block">${product.name}</span>
-            <span class="text-xs text-gray-500">${priceFormatted} | Estoque: ${stock}</span>
+            <span class="text-xs text-gray-500">${priceFormatted} | Estoque: ${stock}${expiryLabel}</span>
           </div>
         </div>
         <input type="number" min="1" max="${stock}" value="1" class="w-16 px-2 py-1.5 text-sm text-right border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" data-product="${product.name}" />

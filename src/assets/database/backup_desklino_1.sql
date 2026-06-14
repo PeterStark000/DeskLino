@@ -144,6 +144,7 @@ CREATE TABLE produto (
   valor DECIMAL(6,2) NOT NULL,
   qtde_estoque SMALLINT NOT NULL DEFAULT 0,
   disponivel CHAR(1) NOT NULL DEFAULT 'S',
+  data_validade DATE DEFAULT NULL,
   PRIMARY KEY (cod_produto)
 );
 
@@ -512,5 +513,13 @@ BEGIN
     END IF;
 END$$
 
+CREATE TRIGGER `trg_produto_validade_update`
+BEFORE UPDATE ON `produto`
+FOR EACH ROW
+BEGIN
+    IF NEW.data_validade IS NOT NULL AND NEW.data_validade < CURDATE() THEN
+        SET NEW.disponivel = 'N';
+    END IF;
+END$$
 
 DELIMITER ;

@@ -95,6 +95,7 @@ CREATE TABLE `produto` (
   `valor` decimal(6,2) NOT NULL,
   `qtde_estoque` smallint(6) NOT NULL DEFAULT 0,
   `disponivel` char(1) NOT NULL DEFAULT 'S',
+  `data_validade` date DEFAULT NULL,
   PRIMARY KEY (`cod_produto`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -318,7 +319,16 @@ BEGIN
     WHERE cod_produto = NEW.cod_produto;
 END$$
 
-CREATE TRIGGER trg_recalcula_total_insert
+CREATE TRIGGER trg_produto_validade_update
+BEFORE UPDATE ON produto
+FOR EACH ROW
+BEGIN
+    IF NEW.data_validade IS NOT NULL AND NEW.data_validade < CURDATE() THEN
+        SET NEW.disponivel = 'N';
+    END IF;
+END$$
+
+
 AFTER INSERT ON item_pedido
 FOR EACH ROW
 BEGIN
