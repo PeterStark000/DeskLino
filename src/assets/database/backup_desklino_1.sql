@@ -488,31 +488,6 @@ BEGIN
     WHERE cod_pedido = OLD.cod_pedido;
 END$$
 
-CREATE TRIGGER trg_endereco_principal_insert
-BEFORE INSERT ON endereco_entrega
-FOR EACH ROW
-BEGIN
-    IF NEW.principal = 'S' THEN
-        UPDATE endereco_entrega
-        SET principal = 'N'
-        WHERE cod_cliente = NEW.cod_cliente
-          AND principal   = 'S';
-    END IF;
-END$$
-
-CREATE TRIGGER trg_endereco_principal_update
-BEFORE UPDATE ON endereco_entrega
-FOR EACH ROW
-BEGIN
-    IF NEW.principal = 'S' AND OLD.principal != 'S' THEN
-        UPDATE endereco_entrega
-        SET principal = 'N'
-        WHERE cod_cliente = NEW.cod_cliente
-          AND principal   = 'S'
-          AND cod_endereco != NEW.cod_endereco;
-    END IF;
-END$$
-
 CREATE TRIGGER `trg_produto_validade_update`
 BEFORE UPDATE ON `produto`
 FOR EACH ROW
