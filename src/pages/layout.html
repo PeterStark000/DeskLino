@@ -3,30 +3,35 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Picolino Gás - Sistema de Suporte ao Atendimento" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><text y=%22.9em%22 font-size=%2222%22>🔥</text></svg>" />
   <title>{{title}}</title>
   <link rel="stylesheet" href="/static/assets/styles.css" />
 </head>
-<body class="bg-gray-100 min-h-screen text-gray-800 font-inter">
+<body class="bg-gray-50 min-h-screen text-gray-800 font-inter antialiased">
   <!-- Toast Container -->
-  <div id="toast-container" class="fixed top-5 right-5 z-[10000] flex flex-col items-end"></div>
-  
+  <div id="toast-container" class="fixed top-5 right-5 z-[10000] flex flex-col items-end gap-2"></div>
+
   {{content}}
-  <dialog id="call-modal" class="rounded-lg p-0 w-full max-w-md shadow-xl border border-gray-200 z-[9999]">
-    <div class="p-8 flex flex-col gap-6 bg-white rounded-lg">
-      <h2 class="text-xl font-semibold text-gray-800">Simular Chamada</h2>
+
+  <!-- Modal global: Simular Chamada -->
+  <dialog id="call-modal" class="rounded-xl p-0 w-full max-w-md shadow-2xl border border-gray-200 z-[9999]">
+    <div class="p-8 flex flex-col gap-6 bg-white rounded-xl">
+      <h2 class="text-xl font-semibold text-gray-900">Simular Chamada</h2>
       <p class="text-sm text-gray-600 leading-relaxed">Informe o número de telefone para simular a ligação.</p>
 
       <div class="space-y-2">
-        <label for="call-phone-input" class="block text-sm font-medium text-gray-700 pb-2">Telefone</label>
+        <label for="call-phone-input" class="block text-sm font-medium text-gray-700">Telefone</label>
         <input id="call-phone-input" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="(11) 98765-4321" />
       </div>
-      
+
       <div class="flex justify-between">
-        <button id="call-modal-cancel" class="px-4 py-2 text-sm rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-gray-700">Cancelar</button>
-        <button id="call-modal-confirm" class="px-4 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700">Continuar</button>
+        <button id="call-modal-cancel" class="px-4 py-2 text-sm rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 transition-colors">Cancelar</button>
+        <button id="call-modal-confirm" class="px-4 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors">Continuar</button>
       </div>
     </div>
   </dialog>
+
   <script type="module" src="/static/scripts/main.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"></script>
 </body>

@@ -18,12 +18,47 @@ const OrderController = require('./src/controllers/orderController');
 app.use(express.json());
 app.use('/static', express.static(path.join(__dirname, 'src')));
 
-// Helper para renderizar páginas
-function renderPage(fileName, title = 'Picolino Gás') {
+// ===== Partials reutilizáveis (header e navegação) =====
+const PARTIALS_DIR = path.join(__dirname, 'src', 'pages', 'partials');
+const partialCache = {};
+
+function readPartial(fileName) {
+  if (!partialCache[fileName]) {
+    partialCache[fileName] = fs.readFileSync(path.join(PARTIALS_DIR, fileName), 'utf-8');
+  }
+  return partialCache[fileName];
+}
+
+// Classes de estilo para as abas do menu administrativo
+const TAB_ACTIVE = 'border-blue-600 text-blue-700 font-semibold';
+const TAB_INACTIVE = 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300';
+
+// Monta o menu de navegação do painel administrativo, destacando a aba ativa
+function renderAdminNav(activeTab) {
+  const tabs = ['usuarios', 'logs', 'clientes', 'telefones', 'pedidos', 'produtos'];
+  let nav = readPartial('admin_nav.html');
+  tabs.forEach((tab) => {
+    nav = nav.replace(`{{tab_${tab}}}`, tab === activeTab ? TAB_ACTIVE : TAB_INACTIVE);
+  });
+  return nav;
+}
+
+// Helper para renderizar páginas a partir do layout + partials + conteúdo
+function renderPage(fileName, title = 'Picolino Gás', options = {}) {
   const layoutPath = path.join(__dirname, 'src', 'pages', 'layout.html');
   const contentPath = path.join(__dirname, 'src', 'pages', fileName);
   const layout = fs.readFileSync(layoutPath, 'utf-8');
-  const content = fs.readFileSync(contentPath, 'utf-8');
+  let content = fs.readFileSync(contentPath, 'utf-8');
+
+  // Injeta o header apropriado (admin, atendimento com/sem botão voltar)
+  const headerPartial = options.header ? readPartial(options.header) : '';
+  content = content.replace('{{header}}', headerPartial);
+
+  // Injeta a navegação do painel admin, marcando a aba ativa
+  if (options.activeTab) {
+    content = content.replace('{{adminNav}}', renderAdminNav(options.activeTab));
+  }
+
   return layout
     .replace('{{title}}', title)
     .replace('{{content}}', content);
@@ -33,22 +68,22 @@ function renderPage(fileName, title = 'Picolino Gás') {
 const pages = [
   { path: '/', redirect: '/login' },
   { path: '/login', file: 'login.html', title: 'Login' },
-  { path: '/atendimento/idle', file: 'atendimento_idle.html', title: 'Atendimento - Ocioso' },
-  { path: '/atendimento/identificado', file: 'atendimento_identificado.html', title: 'Atendimento - Identificado' },
-  { path: '/atendimento/novo', file: 'atendimento_novo.html', title: 'Atendimento - Novo Cliente' },
-  { path: '/admin/usuarios', file: 'admin_usuarios.html', title: 'Admin - Usuários' },
-  { path: '/admin/logs', file: 'admin_logs.html', title: 'Admin - Logs' },
-  { path: '/admin/clientes', file: 'admin_clientes.html', title: 'Admin - Clientes' },
-  { path: '/admin/telefones', file: 'admin_telefones.html', title: 'Admin - Telefones' },
-  { path: '/admin/pedidos', file: 'admin_pedidos.html', title: 'Admin - Pedidos' },
-  { path: '/admin/produtos', file: 'admin_produtos.html', title: 'Admin - Produtos' }
+  { path: '/atendimento/idle', file: 'atendimento_idle.html', title: 'Atendimento - Ocioso', header: 'header_idle.html' },
+  { path: '/atendimento/identificado', file: 'atendimento_identificado.html', title: 'Atendimento - Identificado', header: 'header_call.html' },
+  { path: '/atendimento/novo', file: 'atendimento_novo.html', title: 'Atendimento - Novo Cliente', header: 'header_call.html' },
+  { path: '/admin/usuarios', file: 'admin_usuarios.html', title: 'Admin - Usuários', header: 'header_admin.html', activeTab: 'usuarios' },
+  { path: '/admin/logs', file: 'admin_logs.html', title: 'Admin - Logs', header: 'header_admin.html', activeTab: 'logs' },
+  { path: '/admin/clientes', file: 'admin_clientes.html', title: 'Admin - Clientes', header: 'header_admin.html', activeTab: 'clientes' },
+  { path: '/admin/telefones', file: 'admin_telefones.html', title: 'Admin - Telefones', header: 'header_admin.html', activeTab: 'telefones' },
+  { path: '/admin/pedidos', file: 'admin_pedidos.html', title: 'Admin - Pedidos', header: 'header_admin.html', activeTab: 'pedidos' },
+  { path: '/admin/produtos', file: 'admin_produtos.html', title: 'Admin - Produtos', header: 'header_admin.html', activeTab: 'produtos' }
 ];
 
-pages.forEach(({ path, redirect, file, title }) => {
+pages.forEach(({ path, redirect, file, title, header, activeTab }) => {
   if (redirect) {
     app.get(path, (req, res) => res.redirect(redirect));
   } else {
-    app.get(path, (req, res) => res.send(renderPage(file, title)));
+    app.get(path, (req, res) => res.send(renderPage(file, title, { header, activeTab })));
   }
 });
 
