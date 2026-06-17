@@ -18,7 +18,6 @@ const OrderController = require('./src/controllers/orderController');
 app.use(express.json());
 app.use('/static', express.static(path.join(__dirname, 'src')));
 
-// ===== Partials reutilizáveis (header e navegação) =====
 const PARTIALS_DIR = path.join(__dirname, 'src', 'pages', 'partials');
 const partialCache = {};
 
@@ -29,11 +28,9 @@ function readPartial(fileName) {
   return partialCache[fileName];
 }
 
-// Classes de estilo para as abas do menu administrativo
 const TAB_ACTIVE = 'border-blue-600 text-blue-700 font-semibold';
 const TAB_INACTIVE = 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300';
 
-// Monta o menu de navegação do painel administrativo, destacando a aba ativa
 function renderAdminNav(activeTab) {
   const tabs = ['usuarios', 'logs', 'clientes', 'telefones', 'pedidos', 'produtos'];
   let nav = readPartial('admin_nav.html');
@@ -43,18 +40,15 @@ function renderAdminNav(activeTab) {
   return nav;
 }
 
-// Helper para renderizar páginas a partir do layout + partials + conteúdo
-function renderPage(fileName, title = 'Picolino Gás', options = {}) {
+function renderPage(fileName, title = 'Desklino Gás', options = {}) {
   const layoutPath = path.join(__dirname, 'src', 'pages', 'layout.html');
   const contentPath = path.join(__dirname, 'src', 'pages', fileName);
   const layout = fs.readFileSync(layoutPath, 'utf-8');
   let content = fs.readFileSync(contentPath, 'utf-8');
 
-  // Injeta o header apropriado (admin, atendimento com/sem botão voltar)
   const headerPartial = options.header ? readPartial(options.header) : '';
   content = content.replace('{{header}}', headerPartial);
 
-  // Injeta a navegação do painel admin, marcando a aba ativa
   if (options.activeTab) {
     content = content.replace('{{adminNav}}', renderAdminNav(options.activeTab));
   }
@@ -132,7 +126,6 @@ app.post('/api/telefones', PhoneController.create);
 app.put('/api/telefones/:id', PhoneController.update);
 app.delete('/api/telefones/:id', PhoneController.remove);
 
-// Start server e testa conexão DB
 app.listen(port, async () => {
   console.log(`Server running at http://localhost:${port}`);
   await db.testConnection();

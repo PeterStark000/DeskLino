@@ -3,18 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Picolino Gás - Sistema de Suporte ao Atendimento" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><text y=%22.9em%22 font-size=%2222%22>🔥</text></svg>" />
+  <meta name="description" content="Desklino Gás - Sistema de Suporte ao Atendimento" />
+  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/8884/8884205.png" />
   <title>{{title}}</title>
   <link rel="stylesheet" href="/static/assets/styles.css" />
 </head>
 <body class="bg-gray-50 min-h-screen text-gray-800 font-inter antialiased">
-  <!-- Toast Container -->
   <div id="toast-container" class="fixed top-5 right-5 z-[10000] flex flex-col items-end gap-2"></div>
 
   {{content}}
 
-  <!-- Modal global: Simular Chamada -->
   <dialog id="call-modal" class="rounded-xl p-0 w-full max-w-md shadow-2xl border border-gray-200 z-[9999]">
     <div class="p-8 flex flex-col gap-6 bg-white rounded-xl">
       <h2 class="text-xl font-semibold text-gray-900">Simular Chamada</h2>
